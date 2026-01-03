@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تطبيق ليرة - يحيى عزام القاضي</title>
+    <style>
+        :root {
+            --syria-green: #007A3D;
+            --syria-red: #ED1C24;
+            --glass: rgba(15, 15, 15, 0.92);
+        }
+
+        body, html {
+            margin: 0; padding: 0; min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white; 
+            background: linear-gradient(270deg, #000000, #007A3D, #000000);
+            background-size: 600% 600%;
+            animation: seaWaves 12s ease infinite;
+            overflow-x: hidden;
+        }
+
+        @keyframes seaWaves {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- شاشة الفيديو الافتتاحية --- */
+        #introVideoOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        .video-wrapper { width: 90%; max-width: 500px; border-radius: 20px; overflow: hidden; }
+        #introVideoOverlay video { width: 100%; display: block; }
+        
+        .skip-btn {
+            margin-top: 20px; padding: 10px 25px; background: rgba(255,255,255,0.1);
+            color: white; border: 1px solid white; border-radius: 50px; cursor: pointer;
+        }
+
+        /* --- الصقر العائم الصغير --- */
+        .floating-eagle {
+            position: fixed; bottom: 85px; left: 15px; width: 100px; height: 100px;
+            border-radius: 50%; overflow: hidden; border: 2px solid var(--syria-green);
+            z-index: 4000; box-shadow: 0 0 15px rgba(0, 255, 122, 0.4); background: black;
+        }
+        .floating-eagle video { width: 100%; height: 100%; object-fit: cover; }
+
+        /* --- تنسيقات الموقع الأصلي --- */
+        .top-title {
+            position: fixed; top: 0; left: 0; width: 100%; padding: 12px 0;
+            text-align: center; font-size: 1.1rem; font-weight: bold;
+            color: white; z-index: 2000;
+            background: linear-gradient(to left, #007A3D, #ffffff, #000000);
+        }
+        .bottom-syria-text {
+            position: fixed; bottom: 140px; left: 0; width: 100%;
+            text-align: center; font-size: 1.5rem; font-weight: 900;
+            color: #00ff84; z-index: 1500; pointer-events: none;
+        }
+        .menu-btn {
+            position: fixed; top: 60px; right: 20px; cursor: pointer; z-index: 2001; 
+            background: white; border: 2px solid var(--syria-green); color: var(--syria-red); 
+            border-radius: 12px; width: 45px; padding: 5px 0; text-align: center;
+        }
+        .side-menu {
+            position: fixed; top: 0; right: -280px; width: 260px; height: 100%;
+            background: var(--glass); z-index: 3000; transition: 0.4s ease; padding: 100px 20px;
+            border-left: 4px solid var(--syria-green);
+        }
+        .side-menu.active { right: 0; }
+        .menu-item { padding: 15px; margin-bottom: 15px; border-radius: 12px; cursor: pointer; background: rgba(255,255,255,0.05); text-align: center; font-weight: bold; border-right: 4px solid var(--syria-green); }
+        .page { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+        .page.active { display: flex; }
+        .card { background: var(--glass); border-radius: 25px; padding: 25px; width: 85%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .eagle-btn { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--syria-green); margin: 15px auto; cursor: pointer; background: white; transition: 0.6s; }
+        .eagle-btn.rotate { transform: rotate(180deg); }
+        .input-main { background: white; color: #000; border: 2px solid var(--syria-green); width: 100%; padding: 12px; border-radius: 12px; font-size: 1.3rem; font-weight: bold; text-align: center; outline: none; box-sizing: border-box; }
+        .number-words { display: block; font-size: 0.8rem; color: #00ff84; margin-top: 5px; min-height: 1rem; }
+        .res-box { background: rgba(0,0,0,0.6); padding: 15px; border-radius: 15px; margin-top: 15px; border: 1px solid var(--syria-green); }
+        .footer { text-align: center; padding: 10px; background: rgba(0,0,0,0.9); width: 100%; position: fixed; bottom: 0; left: 0; z-index: 1000; }
+        input[type="range"] { width: 100%; accent-color: var(--syria-green); }
+    </style>
+</head>
+<body>
+
+    <div id="introVideoOverlay">
+        <div class="video-wrapper">
+            <video id="introVideo" playsinline autoplay muted>
+                <source src="https://res.cloudinary.com/dmyfkuoxw/video/upload/v1735862550/WhatsApp_Video_2026-01-03_at_3.02.28_AM_v4vctg.mp4" type="video/mp4">
+            </video>
+        </div>
+        <button class="skip-btn" onclick="hideIntro()">تخطـي العـرض ←</button>
+    </div>
+
+    <div class="floating-eagle">
+        <video autoplay muted loop playsinline>
+            <source src="https://res.cloudinary.com/dmyfkuoxw/video/upload/v1735862550/WhatsApp_Video_2026-01-03_at_3.02.28_AM_v4vctg.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <div class="top-title">تطبيق ليرة - يحيى قاضي</div>
+    <div class="bottom-syria-text">الجمهورية العربية السورية</div>
+
+    <button class="menu-btn" onclick="toggleMenu()">
+        <span>★</span><span>★</span><span>★</span>
+    </button>
+
+    <div id="sideMenu" class="side-menu">
+        <div class="menu-item" onclick="showPage('p1')">🔄 المحول السريع</div>
+        <div class="menu-item" onclick="showPage('p2')">💵 صرف الدولار</div>
+        <div class="menu-item" onclick="showPage('p3')">⚖️ تقسيم الفاتورة</div>
+        <div class="menu-item" onclick="toggleMenu()" style="background:var(--syria-red); margin-top:40px;">إغلاق</div>
+    </div>
+
+    <div id="p1" class="page active">
+        <div class="card">
+            <h2>المحول السريع</h2>
+            <input type="number" id="oldIn" class="input-main" placeholder="مبلغ قديم" oninput="activeConvert='old'; updateWords(this, 'w1')">
+            <span id="w1" class="number-words"></span>
+            <img src="https://tse4.mm.bing.net/th/id/OIP.8bBYgubTKIxUPX7WwyXacQHaHa?rs=1&pid=ImgDetMain" class="eagle-btn" id="eagle1" onclick="handleEagleClick('eagle1', doQuick)">
+            <input type="number" id="newIn" class="input-main" placeholder="مبلغ جديد" oninput="activeConvert='new'; updateWords(this, 'w2')">
+            <span id="w2" class="number-words"></span>
+            <div id="qRes" class="res-box" style="color:#00ff84">اضغط النسر للتحويل</div>
+        </div>
+    </div>
+
+    <div id="p2" class="page">
+        <div class="card">
+            <h2>صرف الدولار</h2>
+            <input type="number" id="uRate" class="input-main" value="15.5" style="margin-bottom:10px">
+            <input type="number" id="uAmt" class="input-main" placeholder="المبلغ بالدولار $" oninput="updateWords(this, 'w3')">
+            <span id="w3" class="number-words"></span>
+            <img src="https://tse4.mm.bing.net/th/id/OIP.8bBYgubTKIxUPX7WwyXacQHaHa?rs=1&pid=ImgDetMain" class="eagle-btn" id="eagle2" onclick="handleEagleClick('eagle2', doUsd)">
+            <div id="uRes" class="res-box" style="color:#00ff84">0 ل.س جديد</div>
+        </div>
+    </div>
+
+    <div id="p3" class="page">
+        <div class="card">
+            <h2>تقسيم الفاتورة</h2>
+            <input type="number" id="splitTotal" class="input-main" placeholder="إجمالي المبلغ" oninput="updateWords(this, 'w4')">
+            <span id="w4" class="number-words"></span>
+            <div style="margin:10px 0;"> <b id="rV">50%</b>
+                <input type="range" id="splitRange" min="0" max="100" value="50" step="5" oninput="document.getElementById('rV').innerText=this.value+'%'">
+            </div>
+            <img src="https://tse4.mm.bing.net/th/id/OIP.8bBYgubTKIxUPX7WwyXacQHaHa?rs=1&pid=ImgDetMain" class="eagle-btn" id="eagle3" onclick="handleEagleClick('eagle3', doSplit)">
+            <div class="res-box">
+                <div id="sPay">حصتك: 0 ل.س</div>
+                <div id="sRest" style="color:#00ff84">المتبقي: 0 ل.س</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div style="font-size: 0.8rem;">المطور: يحيى قاضي | @yahya.sy998</div>
+        <div style="font-size: 0.6rem; color: #aaa; margin-top:5px;">اجتهاد شخصي ولا يتبع لأي جهة رسمية</div>
+    </div>
+
+    <script>
+        const iv = document.getElementById('introVideo');
+        iv.currentTime = 3;
+        iv.onended = () => hideIntro();
+        function hideIntro() {
+            document.getElementById('introVideoOverlay').style.opacity = '0';
+            setTimeout(() => document.getElementById('introVideoOverlay').style.display = 'none', 500);
+        }
+
+        let activeConvert = 'old';
+        function toggleMenu() { document.getElementById('sideMenu').classList.toggle('active'); }
+        function showPage(id) { 
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            toggleMenu();
+        }
+        function handleEagleClick(id, callback) {
+            document.getElementById(id).classList.toggle('rotate');
+            callback();
+        }
+
+        function numberToArabicWords(n) {
+            if(n === 0) return "صفر";
+            const units = ["","واحد","اثنان","ثلاثة","أربعة","خمسة","ستة","سبعة","ثمانية","تسعة"];
+            const tens = ["","عشرة","عشرون","ثلاثون","أربعون","خمسون","ستون","سبعون","ثمانون","تسعون"];
+            const hundreds = ["","مئة","مئتان","ثلاثمئة","أربعمئة","خمسمئة","ستمئة","سبعمئة","ثمانمئة","تسعمئة"];
+            if(n < 10) return units[n];
+            if(n < 100) return tens[Math.floor(n/10)] + (n%10? " و" + units[n%10] : "");
+            if(n < 1000) return hundreds[Math.floor(n/100)] + (n%100? " و" + numberToArabicWords(n%100) : "");
+            return n.toLocaleString() + " ليرة";
+        }
+
+        function updateWords(input, targetId) {
+            let val = parseInt(input.value) || 0;
+            document.getElementById(targetId).innerText = val > 0 ? numberToArabicWords(val) : "";
+        }
+
+        function doQuick() {
+            let o = document.getElementById('oldIn'), n = document.getElementById('newIn');
+            if(activeConvert === 'old' && o.value) { n.value = Math.floor(o.value/100); updateWords(n, 'w2'); document.getElementById('qRes').innerText = n.value + " ل.س جديد"; }
+            else if(n.value) { o.value = n.value * 100; updateWords(o, 'w1'); document.getElementById('qRes').innerText = o.value + " ل.س قديم"; }
+        }
+
+        function doUsd() {
+            let r = parseFloat(document.getElementById('uRate').value)||0, a = parseFloat(document.getElementById('uAmt').value)||0;
+            document.getElementById('uRes').innerText = Math.floor(r*a).toLocaleString() + " ل.س جديد";
+        }
+
+        function doSplit() {
+            let total = parseFloat(document.getElementById('splitTotal').value) || 0;
+            let ratio = document.getElementById('splitRange').value / 100;
+            let share = Math.round(total * ratio);
+            document.getElementById('sPay').innerText = "حصتك: " + share.toLocaleString() + " ل.س";
+            document.getElementById('sRest').innerText = "المتبقي: " + (total - share).toLocaleString() + " ل.س";
+        }
+    </script>
+</body>
+</html>
