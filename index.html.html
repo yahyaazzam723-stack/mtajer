@@ -2,220 +2,162 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تطبيق ليرة - يحيى عزام القاضي</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>شاهين إكسبريس | عهد الأمانة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
     <style>
-        :root {
-            --syria-green: #007A3D;
-            --syria-red: #ED1C24;
-            --glass: rgba(15, 15, 15, 0.92);
+        :root { 
+            --gold: #d4af37; 
+            --bg-purple: #0a010a; 
+            --glass: rgba(25, 5, 25, 0.98); 
+            --text: #fff; 
+            --danger: #e74c3c; 
         }
 
-        body, html {
-            margin: 0; padding: 0; min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: white; 
-            background: linear-gradient(270deg, #000000, #007A3D, #000000);
-            background-size: 600% 600%;
-            animation: seaWaves 12s ease infinite;
-            overflow-x: hidden;
-        }
+        * { box-sizing: border-box; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; height: 100vh; background: var(--bg-purple); color: var(--text); font-family: -apple-system, sans-serif; overflow: hidden; }
 
-        @keyframes seaWaves {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+        /* الإطار الإمبراطوري والإشعارات الداخلية */
+        #internal-notify { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: rgba(0,0,0,0.95); border: 1px solid var(--gold); padding: 18px; border-radius: 20px; z-index: 30000; text-align: center; color: var(--gold); font-weight: bold; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        #internal-notify.show { top: 20px; }
 
-        /* --- شاشة الفيديو الافتتاحية --- */
-        #introVideoOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: black; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; z-index: 9999;
-            transition: opacity 0.5s ease;
-        }
-        .video-wrapper { width: 90%; max-width: 500px; border-radius: 20px; overflow: hidden; }
-        #introVideoOverlay video { width: 100%; display: block; }
+        .shahen-logo-fixed { width: 110px; height: 110px; border-radius: 50%; border: 3px solid var(--gold); margin: 0 auto 10px; background: url('https://i.postimg.cc/3RmMjYNd/Whats-App-Image-2026-04-10-at-6-22-30-PM.jpg') no-repeat center/cover; box-shadow: 0 0 25px rgba(212,175,55,0.3); }
+
+        /* رادار الإلغاء الملكي */
+        #cancel-radar { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-purple); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; text-align: center; }
+        .large-shahen-logo { width: 180px; height: 180px; border-radius: 50%; border: 4px solid var(--gold); margin-bottom: 25px; background: url('https://i.postimg.cc/3RmMjYNd/Whats-App-Image-2026-04-10-at-6-22-30-PM.jpg') no-repeat center/cover; box-shadow: 0 0 40px rgba(212,175,55,0.4); }
+        .radar-box { font-size: 42px; font-weight: bold; color: var(--gold); margin-bottom: 10px; }
+        .pledge-quote { color: var(--gold); font-size: 16px; font-weight: bold; margin-bottom: 30px; }
+
+        /* الفاتورة المفصلة */
+        .bill-card { background: #111; border-radius: 25px; border: 1px solid #222; padding: 25px; margin-top: 15px; }
+        .bill-header { color: var(--gold); font-weight: bold; padding-bottom: 12px; border-bottom: 1px solid #222; margin-bottom: 15px; display: flex; justify-content: space-between; }
+        .bill-item { display: flex; align-items: center; gap: 15px; padding: 12px 0; border-bottom: 1px dashed #1a1a1a; }
+        .bill-item img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; border: 1px solid #222; }
+        .bill-summary { background: rgba(212,175,55,0.02); border-radius: 15px; padding: 15px; margin-top: 15px; font-size: 14px; }
+
+        .app-shell { width: 100%; max-width: 500px; height: 100%; margin: auto; position: relative; display: flex; flex-direction: column; border-left: 1px solid rgba(212,175,55,0.1); border-right: 1px solid rgba(212,175,55,0.1); }
+        .page { display: none; padding: 0 25px 25px; flex-direction: column; flex-grow: 1; overflow-y: auto; z-index: 20; }
+        .page.active { display: flex; animation: appleFade 0.5s ease; }
+        @keyframes appleFade { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; } }
+
+        .card { background: rgba(255,255,255,0.02); border-radius: 25px; padding: 18px; margin-bottom: 15px; display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.04); }
+        .card img { width: 65px; height: 65px; border-radius: 16px; object-fit: cover; margin-left: 15px; border: 1px solid var(--gold); }
+        .btn-gold { background: var(--gold); color: #000; border: none; padding: 18px; border-radius: 18px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; }
         
-        .skip-btn {
-            margin-top: 20px; padding: 10px 25px; background: rgba(255,255,255,0.1);
-            color: white; border: 1px solid white; border-radius: 50px; cursor: pointer;
-        }
+        .tab-bar { height: 90px; background: #000; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid rgba(212,175,55,0.1); }
+        .tab-item { color: #444; text-align: center; font-size: 11px; cursor: pointer; position: relative; }
+        .tab-item.active { color: var(--gold); }
+        .badge { position: absolute; top: -5px; right: -5px; background: var(--danger); color: #fff; font-size: 10px; padding: 3px 7px; border-radius: 50%; font-weight: bold; }
 
-        /* --- الصقر العائم الصغير --- */
-        .floating-eagle {
-            position: fixed; bottom: 85px; left: 15px; width: 100px; height: 100px;
-            border-radius: 50%; overflow: hidden; border: 2px solid var(--syria-green);
-            z-index: 4000; box-shadow: 0 0 15px rgba(0, 255, 122, 0.4); background: black;
-        }
-        .floating-eagle video { width: 100%; height: 100%; object-fit: cover; }
-
-        /* --- تنسيقات الموقع الأصلي --- */
-        .top-title {
-            position: fixed; top: 0; left: 0; width: 100%; padding: 12px 0;
-            text-align: center; font-size: 1.1rem; font-weight: bold;
-            color: white; z-index: 2000;
-            background: linear-gradient(to left, #007A3D, #ffffff, #000000);
-        }
-        .bottom-syria-text {
-            position: fixed; bottom: 140px; left: 0; width: 100%;
-            text-align: center; font-size: 1.5rem; font-weight: 900;
-            color: #00ff84; z-index: 1500; pointer-events: none;
-        }
-        .menu-btn {
-            position: fixed; top: 60px; right: 20px; cursor: pointer; z-index: 2001; 
-            background: white; border: 2px solid var(--syria-green); color: var(--syria-red); 
-            border-radius: 12px; width: 45px; padding: 5px 0; text-align: center;
-        }
-        .side-menu {
-            position: fixed; top: 0; right: -280px; width: 260px; height: 100%;
-            background: var(--glass); z-index: 3000; transition: 0.4s ease; padding: 100px 20px;
-            border-left: 4px solid var(--syria-green);
-        }
-        .side-menu.active { right: 0; }
-        .menu-item { padding: 15px; margin-bottom: 15px; border-radius: 12px; cursor: pointer; background: rgba(255,255,255,0.05); text-align: center; font-weight: bold; border-right: 4px solid var(--syria-green); }
-        .page { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
-        .page.active { display: flex; }
-        .card { background: var(--glass); border-radius: 25px; padding: 25px; width: 85%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
-        .eagle-btn { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--syria-green); margin: 15px auto; cursor: pointer; background: white; transition: 0.6s; }
-        .eagle-btn.rotate { transform: rotate(180deg); }
-        .input-main { background: white; color: #000; border: 2px solid var(--syria-green); width: 100%; padding: 12px; border-radius: 12px; font-size: 1.3rem; font-weight: bold; text-align: center; outline: none; box-sizing: border-box; }
-        .number-words { display: block; font-size: 0.8rem; color: #00ff84; margin-top: 5px; min-height: 1rem; }
-        .res-box { background: rgba(0,0,0,0.6); padding: 15px; border-radius: 15px; margin-top: 15px; border: 1px solid var(--syria-green); }
-        .footer { text-align: center; padding: 10px; background: rgba(0,0,0,0.9); width: 100%; position: fixed; bottom: 0; left: 0; z-index: 1000; }
-        input[type="range"] { width: 100%; accent-color: var(--syria-green); }
+        #modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-purple); z-index: 15000; display: none; flex-direction: column; }
     </style>
 </head>
 <body>
 
-    <div id="introVideoOverlay">
-        <div class="video-wrapper">
-            <video id="introVideo" playsinline autoplay muted>
-                <source src="https://res.cloudinary.com/dmyfkuoxw/video/upload/v1735862550/WhatsApp_Video_2026-01-03_at_3.02.28_AM_v4vctg.mp4" type="video/mp4">
-            </video>
+<div id="internal-notify"> <span id="notify-text"></span></div>
+
+<div id="cancel-radar">
+    <div class="large-shahen-logo"></div>
+    <div class="radar-box"><span id="r-timer">15</span>ث</div>
+    <div class="pledge-quote">﴿ وَأَوْفُوا بِعَهْدِ اللَّهِ ﴾</div>
+    <button class="btn-gold" style="width:240px; background:var(--danger); color:#fff; border-radius:50px;" onclick="abortOrder()">إلغاء الطلب (تراجع) ✖</button>
+</div>
+
+<div id="modal-overlay">
+    <div style="padding:45px 20px 20px; background:#000; border-bottom:1px solid var(--gold); display:flex; align-items:center; gap:15px;"><i class="fas fa-chevron-right" onclick="closeModal()" style="color:var(--gold); font-size:24px;"></i><b id="modal-title">تواصل مع القائد يحيى</b></div>
+    <div id="modal-content" style="flex:1; padding:20px; overflow-y:auto;"></div>
+</div>
+
+<div class="app-shell">
+    
+    <div id="p-login" class="page active" style="justify-content:center; text-align:center;">
+        <div class="shahen-logo-fixed"></div>
+        <h2 style="color:var(--gold); margin:0 0 25px;">انضم إلى صقور شاهين</h2>
+        <input type="text" id="uName" style="width:100%; padding:18px; background:#111; border:1px solid #333; border-radius:15px; color:#fff; text-align:center; margin-bottom:12px; outline:none;" placeholder="الاسم الكامل">
+        <input type="tel" id="uPhone" style="width:100%; padding:18px; background:#111; border:1px solid #333; border-radius:15px; color:#fff; text-align:center; margin-bottom:20px; outline:none;" placeholder="رقم التواصل">
+        <div style="background:rgba(212,175,55,0.03); border:1px solid rgba(212,175,55,0.1); border-radius:20px; padding:20px; margin-bottom:25px; text-align:right;">
+            <p style="font-size:11px; line-height:1.7; color:#ccc;">أتعهد أنا/ <b id="p-name-val">..........</b>، أمام الله ثم شركة صقور شاهين، بالالتزام بعهد الأمانة وعدم إلغاء الطلبات.</p>
+            <div style="display:flex; align-items:center; gap:12px; justify-content:center; margin-top:15px;"><input type="checkbox" id="pledge-check" style="width:22px; height:22px; accent-color:var(--gold);"><label for="pledge-check" style="font-size:13px; color:var(--gold); font-weight:bold;">أوافق وأعاهد الله</label></div>
         </div>
-        <button class="skip-btn" onclick="hideIntro()">تخطـي العـرض ←</button>
+        <button class="btn-gold" onclick="login()">دخول سريع</button>
     </div>
 
-    <div class="floating-eagle">
-        <video autoplay muted loop playsinline>
-            <source src="https://res.cloudinary.com/dmyfkuoxw/video/upload/v1735862550/WhatsApp_Video_2026-01-03_at_3.02.28_AM_v4vctg.mp4" type="video/mp4">
-        </video>
+    <div id="p-home" class="page">
+        <div style="padding:45px 0 15px; text-align:right;"><h1 style="color:var(--gold); margin:0; font-size:35px;">اكتشف</h1></div>
+        <div style="padding-bottom:20px;"><div style="background:rgba(255,255,255,0.05); border-radius:15px; padding:14px; display:flex; gap:12px; border:1px solid #222;"><i class="fas fa-search" style="color:#555"></i><input type="text" id="g-search" placeholder="بحث عن مطعم.." style="background:none; border:none; color:#fff; width:100%; outline:none;" onkeyup="renderPlaces()"></div></div>
+        <div id="res-list"></div>
     </div>
 
-    <div class="top-title">تطبيق ليرة - يحيى قاضي</div>
-    <div class="bottom-syria-text">الجمهورية العربية السورية</div>
+    <div id="p-menu" class="page"><div id="menu-header" style="margin:25px 0; display:flex; align-items:center; gap:15px;"></div><div id="items-list"></div></div>
+    
+    <div id="p-cart" class="page"><div style="padding:40px 0 10px;"><h1>الفاتورة الملكية</h1></div><div id="cart-content"></div><div id="cart-summary"></div></div>
 
-    <button class="menu-btn" onclick="toggleMenu()">
-        <span>★</span><span>★</span><span>★</span>
-    </button>
+    <div id="p-history" class="page"><div style="padding:40px 0 10px;"><h1>مهامي 🦅</h1></div><h4 style="color:var(--gold); margin-bottom:12px;">طلبات نشطة</h4><div id="active-orders"></div><h4 style="color:#444; margin-top:25px; border-top:1px solid #111; padding-top:20px;">سابقة</h4><div id="past-orders"></div></div>
 
-    <div id="sideMenu" class="side-menu">
-        <div class="menu-item" onclick="showPage('p1')">🔄 المحول السريع</div>
-        <div class="menu-item" onclick="showPage('p2')">💵 صرف الدولار</div>
-        <div class="menu-item" onclick="showPage('p3')">⚖️ تقسيم الفاتورة</div>
-        <div class="menu-item" onclick="toggleMenu()" style="background:var(--syria-red); margin-top:40px;">إغلاق</div>
-    </div>
+    <div id="tab-bar" class="tab-bar" style="display:none"><div class="tab-item active" onclick="nav('p-home')"><i class="fas fa-home fa-lg"></i><br>الرئيسية</div><div class="tab-item" onclick="nav('p-cart')"><span id="cart-badge" class="badge" style="display:none">0</span><i class="fas fa-file-invoice-dollar fa-lg"></i><br>الفاتورة</div><div class="tab-item" onclick="nav('p-history')"><i class="fas fa-clock fa-lg"></i><br>طلباتي</div></div>
+</div>
 
-    <div id="p1" class="page active">
-        <div class="card">
-            <h2>المحول السريع</h2>
-            <input type="number" id="oldIn" class="input-main" placeholder="مبلغ قديم" oninput="activeConvert='old'; updateWords(this, 'w1')">
-            <span id="w1" class="number-words"></span>
-            <img src="https://tse4.mm.bing.net/th/id/OIP.8bBYgubTKIxUPX7WwyXacQHaHa?rs=1&pid=ImgDetMain" class="eagle-btn" id="eagle1" onclick="handleEagleClick('eagle1', doQuick)">
-            <input type="number" id="newIn" class="input-main" placeholder="مبلغ جديد" oninput="activeConvert='new'; updateWords(this, 'w2')">
-            <span id="w2" class="number-words"></span>
-            <div id="qRes" class="res-box" style="color:#00ff84">اضغط النسر للتحويل</div>
-        </div>
-    </div>
+<script>
+    const fbConfig = { apiKey: "AIzaSyATT9rGsphiw9XjGW-BaE_aVg0O6bGYi14", authDomain: "shahen-f31c2.firebaseapp.com", databaseURL: "https://shahen-f31c2-default-rtdb.firebaseio.com", projectId: "shahen-f31c2", storageBucket: "shahen-f31c2.firebasestorage.app", appId: "1:531429638214:web:11376d90b1d66c37f14a47" };
+    firebase.initializeApp(fbConfig); const db = firebase.database();
+    
+    // نظام الثبات الدائم (LocalStorage)
+    let cart = JSON.parse(localStorage.getItem('sh_cart')) || [], curRid = localStorage.getItem('sh_cur_rid') || null, rInt = null;
 
-    <div id="p2" class="page">
-        <div class="card">
-            <h2>صرف الدولار</h2>
-            <input type="number" id="uRate" class="input-main" value="15.5" style="margin-bottom:10px">
-            <input type="number" id="uAmt" class="input-main" placeholder="المبلغ بالدولار $" oninput="updateWords(this, 'w3')">
-            <span id="w3" class="number-words"></span>
-            <img src="https://tse4.mm.bing.net/th/id/OIP.8bBYgubTKIxUPX7WwyXacQHaHa?rs=1&pid=ImgDetMain" class="eagle-btn" id="eagle2" onclick="handleEagleClick('eagle2', doUsd)">
-            <div id="uRes" class="res-box" style="color:#00ff84">0 ل.س جديد</div>
-        </div>
-    </div>
+    function notify(m) { document.getElementById('notify-text').innerText = m; const n = document.getElementById('internal-notify'); n.classList.add('show'); setTimeout(() => n.classList.remove('show'), 3000); }
+    document.getElementById('uName').oninput = (e) => { document.getElementById('p-name-val').innerText = e.target.value || ".........."; };
 
-    <div id="p3" class="page">
-        <div class="card">
-            <h2>تقسيم الفاتورة</h2>
-            <input type="number" id="splitTotal" class="input-main" placeholder="إجمالي المبلغ" oninput="updateWords(this, 'w4')">
-            <span id="w4" class="number-words"></span>
-            <div style="margin:10px 0;"> <b id="rV">50%</b>
-                <input type="range" id="splitRange" min="0" max="100" value="50" step="5" oninput="document.getElementById('rV').innerText=this.value+'%'">
-            </div>
-            <img src="https://tse4.mm.bing.net/th/id/OIP.8bBYgubTKIxUPX7WwyXacQHaHa?rs=1&pid=ImgDetMain" class="eagle-btn" id="eagle3" onclick="handleEagleClick('eagle3', doSplit)">
-            <div class="res-box">
-                <div id="sPay">حصتك: 0 ل.س</div>
-                <div id="sRest" style="color:#00ff84">المتبقي: 0 ل.س</div>
-            </div>
-        </div>
-    </div>
+    function login() { const n = document.getElementById('uName').value, p = document.getElementById('uPhone').value, c = document.getElementById('pledge-check').checked; if(n && p && c) { localStorage.setItem('sh_active_u', JSON.stringify({name:n, phone:p})); location.reload(); } else { notify("⚠️ أكمل العهد الشرعي أولاً"); } }
+    
+    window.onload = () => {
+        db.ref('sh_restaurants').on('value', (s) => { if(s.val()) { localStorage.setItem('sh_restaurants', JSON.stringify(Object.values(s.val()))); renderPlaces(); } });
+        if(localStorage.getItem('sh_active_u')) { document.getElementById('p-login').classList.remove('active'); document.getElementById('tab-bar').style.display = 'flex'; nav('p-home'); updateBadge(); }
+    };
 
-    <div class="footer">
-        <div style="font-size: 0.8rem;">المطور: يحيى قاضي | @yahya.sy998</div>
-        <div style="font-size: 0.6rem; color: #aaa; margin-top:5px;">اجتهاد شخصي ولا يتبع لأي جهة رسمية</div>
-    </div>
+    function renderPlaces() { const q = document.getElementById('g-search').value.toLowerCase(); const all = JSON.parse(localStorage.getItem('sh_restaurants')) || []; document.getElementById('res-list').innerHTML = all.filter(r => r.name.toLowerCase().includes(q)).map(r => `<div class="card" onclick="openMenu('${r.id}')"><img src="${r.image}"><div><b>${r.name}</b><br><small style="color:var(--gold)">صقر شاهين متاح 🦅</small></div></div>`).join(''); }
+    function openMenu(id) { const res = JSON.parse(localStorage.getItem('sh_restaurants')).find(r => r.id == id); document.getElementById('menu-header').innerHTML = `<i class="fas fa-chevron-right" onclick="nav('p-home')"></i> <b style="font-size:22px;">${res.name}</b>`; document.getElementById('items-list').innerHTML = res.menu.map(m => `<div class="card" style="justify-content:space-between"><div style="display:flex; align-items:center; gap:12px"><img src="${m.img}" style="width:60px; height:60px; border-radius:12px; object-fit:cover;"><div><b>${m.itemName}</b><br><small style="color:var(--gold)">${m.price} ل.س</small></div></div><button class="btn-gold" style="width:auto; padding:8px 15px" onclick="add('${res.id}','${res.name}','${m.itemName}',${m.price},'${m.img}')">أضف</button></div>`).join(''); nav('p-menu'); }
+    
+    function add(rid, rn, n, p, img) { 
+        if(curRid && curRid !== rid) return notify("❌ مطعم واحد فقط في الفاتورة!"); curRid = rid; 
+        cart.push({rn, n, p, img}); localStorage.setItem('sh_cart', JSON.stringify(cart)); localStorage.setItem('sh_cur_rid', rid);
+        notify("✅ تمت الإضافة للفاتورة"); updateBadge();
+    }
+    function updateBadge() { const b = document.getElementById('cart-badge'); b.innerText = cart.length; b.style.display = cart.length>0?'block':'none'; }
 
-    <script>
-        const iv = document.getElementById('introVideo');
-        iv.currentTime = 3;
-        iv.onended = () => hideIntro();
-        function hideIntro() {
-            document.getElementById('introVideoOverlay').style.opacity = '0';
-            setTimeout(() => document.getElementById('introVideoOverlay').style.display = 'none', 500);
-        }
+    function renderCart() {
+        const c = document.getElementById('cart-content'); if(cart.length === 0) { c.innerHTML = "<p style='text-align:center; opacity:0.3; padding:50px;'>الفاتورة فارغة حالياً..</p>"; return; }
+        c.innerHTML = `<div class="bill-card"><div class="bill-header"><span>${cart[0].rn}</span><i class="fas fa-store"></i></div>` + cart.map((i,idx) => `<div class="bill-item"><img src="${i.img}"><div style="flex:1"><b>${i.n}</b></div><b>${i.p} ل.س</b><i class="fas fa-trash-alt" style="color:var(--danger); margin-right:12px;" onclick="rem(${idx})"></i></div>`).join('') + `</div>`;
+        const sub = cart.reduce((s,i) => s + i.p, 0); document.getElementById('cart-summary').innerHTML = `<div class="bill-summary"><div style="display:flex; justify-content:space-between"><span>رسوم التوصيل:</span><b>10,000 ل.س</b></div><div style="display:flex; justify-content:space-between; color:var(--gold); font-size:20px; font-weight:bold; margin-top:15px; border-top:1px solid #222; padding-top:10px;"><span>الإجمالي النهائي:</span><span>${sub+10000} ل.س</span></div></div><button class="btn-gold" style="margin-top:25px;" onclick="startRadar()">اعتماد الفاتورة 🦅</button>`;
+    }
 
-        let activeConvert = 'old';
-        function toggleMenu() { document.getElementById('sideMenu').classList.toggle('active'); }
-        function showPage(id) { 
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            toggleMenu();
-        }
-        function handleEagleClick(id, callback) {
-            document.getElementById(id).classList.toggle('rotate');
-            callback();
-        }
+    function rem(idx) { cart.splice(idx,1); if(cart.length===0) { curRid=null; localStorage.removeItem('sh_cur_rid'); } localStorage.setItem('sh_cart', JSON.stringify(cart)); renderCart(); updateBadge(); }
+    function startRadar() { document.getElementById('cancel-radar').style.display = 'flex'; let t = 15; rInt = setInterval(() => { t--; document.getElementById('r-timer').innerText = t; if(t <= 0) finalize(); }, 1000); }
+    function abortOrder() { clearInterval(rInt); document.getElementById('cancel-radar').style.display = 'none'; notify("✖ تم إلغاء الإرسال"); }
+    
+    function finalize() {
+        clearInterval(rInt); const id = Date.now(); const sub = cart.reduce((s,i)=>s+i.p,10000);
+        const o = { id, res: cart[0].rn, total: sub, status: 'نشط 🦅', driver: 'بانتظار القبول' };
+        let h = JSON.parse(localStorage.getItem('sh_h')) || []; h.unshift(o); localStorage.setItem('sh_h', JSON.stringify(h));
+        db.ref('sh_public_orders/'+id).set({...o, customer: JSON.parse(localStorage.getItem('sh_active_u')).name});
+        cart = []; curRid = null; localStorage.removeItem('sh_cart'); localStorage.removeItem('sh_cur_rid');
+        document.getElementById('cancel-radar').style.display = 'none'; nav('p-history'); notify("🚀 صقر شاهين انطلق إليك");
+    }
 
-        function numberToArabicWords(n) {
-            if(n === 0) return "صفر";
-            const units = ["","واحد","اثنان","ثلاثة","أربعة","خمسة","ستة","سبعة","ثمانية","تسعة"];
-            const tens = ["","عشرة","عشرون","ثلاثون","أربعون","خمسون","ستون","سبعون","ثمانون","تسعون"];
-            const hundreds = ["","مئة","مئتان","ثلاثمئة","أربعمئة","خمسمئة","ستمئة","سبعمئة","ثمانمئة","تسعمئة"];
-            if(n < 10) return units[n];
-            if(n < 100) return tens[Math.floor(n/10)] + (n%10? " و" + units[n%10] : "");
-            if(n < 1000) return hundreds[Math.floor(n/100)] + (n%100? " و" + numberToArabicWords(n%100) : "");
-            return n.toLocaleString() + " ليرة";
-        }
+    function renderHistory() {
+        const all = JSON.parse(localStorage.getItem('sh_h')) || [];
+        document.getElementById('active-orders').innerHTML = all.filter(o => o.status === 'نشط 🦅').map(o => `<div class="card" style="flex-direction:column; align-items:flex-start;"><b>${o.res}</b><small>المندوب المسؤول: ${o.driver}</small><button class="btn-gold" style="margin-top:10px; font-size:12px; height:40px;" onclick="openC('${o.id}','${o.driver}')">تقديم شكوى</button></div>`).join('');
+        document.getElementById('past-orders').innerHTML = all.filter(o => o.status !== 'نشط 🦅').map(o => `<div class="card" style="opacity:0.5"><b>${o.res}</b><br><small>${o.total} ل.س</small></div>`).join('');
+    }
 
-        function updateWords(input, targetId) {
-            let val = parseInt(input.value) || 0;
-            document.getElementById(targetId).innerText = val > 0 ? numberToArabicWords(val) : "";
-        }
-
-        function doQuick() {
-            let o = document.getElementById('oldIn'), n = document.getElementById('newIn');
-            if(activeConvert === 'old' && o.value) { n.value = Math.floor(o.value/100); updateWords(n, 'w2'); document.getElementById('qRes').innerText = n.value + " ل.س جديد"; }
-            else if(n.value) { o.value = n.value * 100; updateWords(o, 'w1'); document.getElementById('qRes').innerText = o.value + " ل.س قديم"; }
-        }
-
-        function doUsd() {
-            let r = parseFloat(document.getElementById('uRate').value)||0, a = parseFloat(document.getElementById('uAmt').value)||0;
-            document.getElementById('uRes').innerText = Math.floor(r*a).toLocaleString() + " ل.س جديد";
-        }
-
-        function doSplit() {
-            let total = parseFloat(document.getElementById('splitTotal').value) || 0;
-            let ratio = document.getElementById('splitRange').value / 100;
-            let share = Math.round(total * ratio);
-            document.getElementById('sPay').innerText = "حصتك: " + share.toLocaleString() + " ل.س";
-            document.getElementById('sRest').innerText = "المتبقي: " + (total - share).toLocaleString() + " ل.س";
-        }
-    </script>
+    function openC(id, d) { document.getElementById('modal-overlay').style.display = 'flex'; document.getElementById('modal-title').innerText = "تقديم بلاغ"; document.getElementById('modal-content').innerHTML = `<p style="font-size:12px; color:#888;">المندوب المعني: ${d}</p><textarea id="c-text" style="width:100%; height:150px; background:#111; border:1px solid #333; color:#fff; border-radius:15px; padding:15px;" placeholder="اكتب تفاصيل الشكوى للقائد يحيى.."></textarea><button class="btn-gold" style="margin-top:20px;" onclick="sendC('${id}','${d}')">إرسال البلاغ</button>`; }
+    function sendC(id, d) { const t = document.getElementById('c-text').value; if(t) { db.ref('sh_complaints/'+id).set({t, d, u: JSON.parse(localStorage.getItem('sh_active_u')).name, time: Date.now()}); closeModal(); notify("✅ تم إرسال البلاغ للإدارة"); } }
+    function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+    function nav(id) { document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id==='p-home') renderPlaces(); if(id==='p-cart') renderCart(); if(id==='p-history') renderHistory(); }
+</script>
 </body>
 </html>
