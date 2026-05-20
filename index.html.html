@@ -3,136 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بوابة المتاجر | ورود وحلويات 🌸</title>
+    <title>بوابة المتاجر | شاهين إكسبريس</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* ===== المتغيرات: اللون الزهري للمتاجر (مختلف تماماً عن الأزرق الصيدلية) ===== */
-        :root { --gold: #d4af37; --pink: #e91e8c; --pink-light: rgba(233,30,140,0.15); --pink-dark: rgba(233,30,140,0.08); --p-dark: #0a010a; --p-main: #1d051d; --glass: rgba(255, 255, 255, 0.05); --success: #27ae60; --danger: #e74c3c; --info: #e91e8c; }
+        :root { --gold: #d4af37; --p-dark: #0a010a; --p-main: #1d051d; --glass: rgba(255, 255, 255, 0.05); --success: #27ae60; --danger: #e74c3c; --info: #3498db; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: radial-gradient(circle, var(--p-main), var(--p-dark)); color: #fff; font-family: sans-serif; overflow-x: hidden; min-height: 100vh; display: flex; justify-content: center; align-items: center; transition: all 0.3s ease; }
-        #app-container { position: relative; overflow: hidden; background: radial-gradient(circle, var(--p-main), var(--p-dark)); width: 100vw; height: 100vh; margin: auto; border: 1px solid rgba(233,30,140,0.2); display: flex; flex-direction: column; }
-
-        .view-controls { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 8px 15px; border-radius: 50px; border: 1px solid var(--pink); backdrop-filter: blur(5px); }
+        #app-container { position: relative; overflow: hidden; background: radial-gradient(circle, var(--p-main), var(--p-dark)); width: 100vw; height: 100vh; margin: auto; border: 1px solid rgba(212,175,55,0.2); display: flex; flex-direction: column; }
+        .view-controls { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 8px 15px; border-radius: 50px; border: 1px solid var(--gold); backdrop-filter: blur(5px); }
         .view-btn { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: var(--glass); color: #fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; }
-
         .auth-overlay { position: fixed; inset: 0; background: var(--p-dark); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .auth-card { background: var(--glass); backdrop-filter: blur(10px); padding: 30px; border-radius: 20px; border: 1px solid var(--pink); width: 100%; max-width: 400px; text-align: center; }
+        .auth-card { background: var(--glass); backdrop-filter: blur(10px); padding: 30px; border-radius: 20px; border: 1px solid var(--gold); width: 100%; max-width: 400px; text-align: center; }
         input { width: 100%; padding: 15px; margin-bottom: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; text-align: center; outline: none; }
-        .btn-login { width: 100%; padding: 15px; background: var(--pink); border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: #fff; }
-
-        header { padding: 60px 20px 15px; background: var(--glass); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(233,30,140,0.3); flex-shrink: 0; }
-        .res-name { font-weight: bold; color: var(--pink); }
-
+        .btn-login { width: 100%; padding: 15px; background: var(--gold); border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        header { padding: 60px 20px 15px; background: var(--glass); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+        .res-name { font-weight: bold; color: var(--gold); }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; flex-shrink: 0; }
-        .stat-card { background: var(--glass); padding: 12px; border-radius: 12px; border-right: 3px solid var(--pink); cursor: pointer; }
+        .stat-card { background: var(--glass); padding: 12px; border-radius: 12px; border-right: 3px solid var(--gold); cursor: pointer; }
         .stat-val { font-size: 20px; font-weight: bold; margin-top: 5px; }
-
         .history-report { padding: 0 15px 15px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-        .h-box { background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px; text-align: center; border: 1px solid rgba(233,30,140,0.15); cursor: pointer; }
-        .h-box b { font-size: 14px; color: var(--pink); }
+        .h-box { background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
+        .h-box b { font-size: 14px; color: var(--gold); }
         .p-box { margin-top: 4px; font-size: 9px; color: var(--success); }
-
         #orders-list { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; overflow-y: auto; flex: 1; padding-bottom: 30px; align-content: start; }
-        .order-card { background: var(--glass); border-radius: 15px; padding: 12px; border: 1px solid rgba(233,30,140,0.2); position: relative; display: flex; flex-direction: column; justify-content: space-between; height: fit-content; transition: 0.3s; }
-
-        /* ===== ألوان المتاجر: زهري بالكامل قبل وبعد القبول ===== */
-        .status-new { border-color: var(--pink) !important; box-shadow: 0 0 8px rgba(233,30,140,0.2); }
-        .status-active { border-color: var(--pink) !important; box-shadow: 0 0 10px rgba(233,30,140,0.35) !important; background: rgba(233,30,140,0.07) !important; }
-
+        .order-card { background: var(--glass); border-radius: 15px; padding: 12px; border: 1px solid rgba(255,255,255,0.1); position: relative; display: flex; flex-direction: column; justify-content: space-between; height: fit-content; transition: 0.3s; }
+        .status-new { border-color: var(--gold); }
+        .status-active { border-color: var(--info); box-shadow: 0 0 10px rgba(52, 152, 219, 0.2); }
+        .order-type-tag { font-size: 9px; padding: 2px 7px; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 5px; }
         .btn-act { padding: 8px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; width: 100%; margin-top: 8px; font-size: 11px; }
-        /* ===== زر القبول والمتابعة: زهري ===== */
-        .btn-accept { background: var(--pink); color: #fff; }
-        .btn-follow { background: var(--pink); color: #fff; opacity: 0.9; }
-
+        .btn-accept { background: var(--success); color: #fff; }
+        .btn-follow { background: var(--info); color: #fff; }
         #report-modal { display: none; position: absolute; inset: 0; background: var(--p-dark); z-index: 3000; flex-direction: column; }
-        .modal-header { padding: 15px; background: var(--glass); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--pink); }
+        .modal-header { padding: 15px; background: var(--glass); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gold); }
         .report-list { flex: 1; overflow-y: auto; padding: 15px; }
-
-        /* ===== منطقة الدردشة: زهري ===== */
         #active-chat-box { display: none; position: absolute; inset: 0; background: var(--p-dark); z-index: 2000; flex-direction: column; }
-        .chat-header { padding: 15px; background: var(--glass); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(233,30,140,0.3); }
+        .chat-header { padding: 15px; background: var(--glass); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(212,175,55,0.3); }
         .chat-messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 800px; margin: 0 auto; }
         .msg { max-width: 85%; padding: 10px 15px; border-radius: 15px; font-size: 14px; word-break: break-word; }
-        /* ===== رسائل المتجر: خلفية زهري ===== */
-        .msg.store { background: var(--pink); color: #fff; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .msg.store { background: var(--gold); color: #000; align-self: flex-end; border-bottom-right-radius: 2px; }
         .msg.client { background: #333; color: #fff; align-self: flex-start; border-bottom-left-radius: 2px; }
-
         .chat-input-area { padding: 15px; display: flex; gap: 10px; background: var(--glass); border-top: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 800px; margin: 0 auto; }
         .chat-input-area input { margin: 0; flex: 1; padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid #333; color: #fff; }
-        /* ===== زر الفاتورة: زهري ===== */
-        .btn-finish { background: var(--pink); color: #fff; border: none; border-radius: 12px; padding: 14px; font-weight: bold; cursor: pointer; margin: 0 auto 5px; width: calc(100% - 30px); max-width: 770px; font-size: 14px; }
+        .btn-finish { background: var(--info); color: #fff; border: none; border-radius: 12px; padding: 14px; font-weight: bold; cursor: pointer; margin: 0 auto 5px; width: calc(100% - 30px); max-width: 770px; font-size: 14px; }
         .btn-cancel-chat { background: rgba(255,255,255,0.1); color: var(--danger); border: 1px solid var(--danger); border-radius: 12px; padding: 10px; font-weight: bold; cursor: pointer; margin: 0 auto 15px; width: calc(100% - 30px); max-width: 770px; font-size: 12px; }
-
-        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--pink); color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: bold; display: none; z-index: 9999; }
-        .sync-loader { position: fixed; top: 0; left: 0; height: 3px; background: var(--pink); z-index: 9999; transition: width 0.1s linear; }
+        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #000; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: bold; display: none; z-index: 9999; }
+        .sync-loader { position: fixed; top: 0; left: 0; height: 3px; background: var(--gold); z-index: 9999; transition: width 0.1s linear; }
         .empty-state { text-align: center; opacity: 0.3; margin-top: 50px; grid-column: span 2; }
-
         #order-details-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 5000; align-items: center; justify-content: center; padding: 20px; }
-        .details-card { background: var(--p-main); border: 2px solid var(--pink); padding: 20px; border-radius: 20px; width: 100%; max-width: 400px; }
+        .details-card { background: var(--p-main); border: 2px solid var(--gold); padding: 20px; border-radius: 20px; width: 100%; max-width: 400px; }
         .details-card textarea { width: 100%; height: 120px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 10px; margin: 10px 0; resize: none; font-family: sans-serif; font-size: 14px; }
-        .total-box { background: rgba(233,30,140,0.1); border: 1px dashed var(--pink); border-radius: 10px; padding: 10px; text-align: center; margin-bottom: 15px; }
+        .total-box { background: rgba(212,175,55,0.1); border: 1px dashed var(--gold); border-radius: 10px; padding: 10px; text-align: center; margin-bottom: 15px; }
     </style>
 </head>
 <body onclick="initAudio()">
-
 <div class="view-controls">
     <div class="view-btn" onclick="setVSize('mobile')"><i class="fas fa-mobile-alt"></i></div>
     <div class="view-btn" onclick="setVSize('tablet')"><i class="fas fa-tablet-alt"></i></div>
     <div class="view-btn" onclick="setVSize('laptop')"><i class="fas fa-desktop"></i></div>
 </div>
-
 <div id="app-container">
     <div class="sync-loader" id="sync-bar"></div>
     <div id="toast"></div>
-
     <div id="auth-screen" class="auth-overlay">
         <div class="auth-card">
             <img src="https://i.postimg.cc/QxzPkmPf/Whats-App-Image-2026-04-10-at-6-22-30-PM-t7edrz.jpg" width="80" style="border-radius:20px; margin-bottom:15px;">
-            <h2 style="color:var(--pink);">بوابة المتاجر 🌸</h2>
-            <p style="font-size:12px; opacity:0.7; margin-bottom:15px;">ورود | حلويات | هدايا</p>
+            <h2 style="color:var(--gold);">بوابة المتاجر</h2>
+            <p style="font-size:11px; opacity:0.7; margin-bottom:10px;">ورود - حلويات - هدايا</p>
             <input type="email" id="login-email" placeholder="البريد الإلكتروني">
             <input type="password" id="login-code" placeholder="كود التفعيل">
-            <button class="btn-login" onclick="checkAuth()">دخول المتجر 🛍️</button>
+            <button class="btn-login" onclick="checkAuth()">دخول المتجر</button>
         </div>
     </div>
-
     <div id="main-content" style="display:none; flex-direction:column; height:100vh;">
         <header>
             <div>
                 <div class="res-name" id="display-res-name">اسم المتجر</div>
-                <div id="display-store-type" style="font-size:10px; opacity:0.7; color:var(--pink);"></div>
+                <div id="store-type-label" style="font-size:11px; opacity:0.7; margin-top:3px;"></div>
             </div>
             <button onclick="logout()" style="background:none; border:none; color:var(--danger); font-size:18px;"><i class="fas fa-power-off"></i></button>
         </header>
-
         <div class="stats-grid">
-            <div class="stat-card"><span>طلبات قادمة</span><div id="stat-count" class="stat-val">0</div></div>
-            <div class="stat-card" onclick="openReportModal('day')"><span>أرباح اليوم</span><div id="today-profit" class="stat-val" style="color:var(--pink);">0</div></div>
+            <div class="stat-card"><span>طلبات التواصل</span><div id="stat-count" class="stat-val">0</div></div>
+            <div class="stat-card" onclick="openReportModal()"><span>ارباح اليوم</span><div id="today-profit" class="stat-val" style="color:var(--info);">0</div></div>
         </div>
-
         <div class="history-report">
-            <div class="h-box" onclick="openReportModal('day')"><span>اليوم</span><b id="report-day">0</b><div class="p-box" id="p-day">0</div></div>
-            <div class="h-box" onclick="openReportModal('week')"><span>الأسبوع</span><b id="report-week">0</b><div class="p-box" id="p-week">0</div></div>
-            <div class="h-box" onclick="openReportModal('month')"><span>الشهر</span><b id="report-month">0</b><div class="p-box" id="p-month">0</div></div>
+            <div class="h-box" onclick="openReportModal()"><span>اليوم</span><b id="report-day">0</b><div class="p-box" id="p-day">0</div></div>
+            <div class="h-box" onclick="openReportModal()"><span>الاسبوع</span><b id="report-week">0</b><div class="p-box" id="p-week">0</div></div>
+            <div class="h-box" onclick="openReportModal()"><span>الشهر</span><b id="report-month">0</b><div class="p-box" id="p-month">0</div></div>
         </div>
-
         <div id="orders-list"></div>
     </div>
-
     <div id="report-modal">
         <div class="modal-header">
-            <b id="report-title">الأرشيف</b>
+            <b>الارشيف</b>
             <button onclick="closeReportModal()" style="background:none; border:none; color:#fff; font-size:20px;"><i class="fas fa-times"></i></button>
         </div>
         <div class="report-list" id="report-items-container"></div>
     </div>
-
-    <!-- ===== منطقة الدردشة: مستقلة تماماً بألوان زهري ===== -->
     <div id="active-chat-box">
         <div class="chat-header">
             <div>
-                <div id="client-name-chat" style="font-weight:bold; font-size:16px; color:var(--pink);">...</div>
+                <div id="client-name-chat" style="font-weight:bold; font-size:16px;">...</div>
                 <div id="active-order-id" style="font-size:10px; opacity:0.6;">...</div>
             </div>
             <button onclick="closeChat()" style="background:none; border:none; color:#fff; font-size:22px;"><i class="fas fa-times"></i></button>
@@ -140,72 +112,58 @@
         <div class="chat-messages" id="chat-flow"></div>
         <div class="chat-input-area">
             <input type="text" id="chat-input" placeholder="اكتب ردك هنا..." onkeydown="if(event.key==='Enter') sendMsg()">
-            <!-- ===== إصلاح المشكلة الأولى: زر الإرسال متصل بـ sendMsg ===== -->
-            <button onclick="sendMsg()" style="background:var(--pink); border:none; padding:10px 15px; border-radius:10px; color:#fff;"><i class="fas fa-paper-plane"></i></button>
+            <button onclick="sendMsg()" style="background:var(--gold); border:none; padding:10px 15px; border-radius:10px;"><i class="fas fa-paper-plane"></i></button>
         </div>
-        <!-- ===== إصلاح المشكلة الثانية: الفاتورة تنهي الطلب وتحذفه من النشطة ===== -->
-        <button class="btn-finish" onclick="showDetailsBox()">إرسال الفاتورة للعميل 🛍️</button>
-        <button class="btn-cancel-chat" onclick="cancelDueToNoResponse()">إلغاء الطلب (عدم رد العميل) ⏳</button>
+        <button class="btn-finish" onclick="showDetailsBox()">ارسال الفاتورة للعميل</button>
+        <button class="btn-cancel-chat" onclick="cancelDueToNoResponse()">الغاء الطلب (عدم رد العميل)</button>
     </div>
-
-    <!-- ===== نافذة إدخال الفاتورة: زهري ===== -->
     <div id="order-details-modal">
         <div class="details-card">
-            <h3 style="color:var(--pink); margin:0 0 10px 0; font-size:16px;">تحديد الأصناف والأسعار 📝</h3>
-            <p style="font-size:11px; opacity:0.8;">اكتب الصنف وبجانبه السعر (سيتم الجمع تلقائياً)</p>
-            <textarea id="order-items-input" placeholder="مثال:&#10;باقة ورد 25000&#10;شوكولاتة 15000" oninput="calculateTotal()"></textarea>
+            <h3 style="color:var(--gold); margin:0 0 10px 0; font-size:16px;">تحديد الاصناف والاسعار</h3>
+            <p style="font-size:11px; opacity:0.8;">اكتب الصنف وبجانبه السعر (سيتم الجمع تلقائيا)</p>
+            <textarea id="order-items-input" placeholder="مثال:&#10;باقة ورد حمراء 15000&#10;تغليف هدية 3000" oninput="calculateTotal()"></textarea>
             <div class="total-box">
-                <span style="font-size: 12px; opacity: 0.8;">إجمالي قيمة الطلب:</span><br>
-                <b id="live-total-price" style="font-size: 20px; color: var(--pink);">0</b> <small>ل.س</small>
+                <span style="font-size: 12px; opacity: 0.8;">اجمالي قيمة الطلب:</span><br>
+                <b id="live-total-price" style="font-size: 20px; color: var(--gold);">0</b> <small>ل.س</small>
             </div>
             <div style="display:flex; gap:10px;">
-                <button onclick="completeOrder()" class="btn-login" style="flex:2;">تأكيد وإرسال الفاتورة 🩷</button>
-                <button onclick="document.getElementById('order-details-modal').style.display='none'" style="flex:1; background:var(--glass); color:#fff; border:1px solid #555; border-radius:12px; cursor:pointer;">إلغاء</button>
+                <button onclick="completeConsultation()" class="btn-login" style="flex:2;">تاكيد وارسال الفاتورة</button>
+                <button onclick="document.getElementById('order-details-modal').style.display='none'" style="flex:1; background:var(--glass); color:#fff; border:1px solid #555; border-radius:12px; cursor:pointer;">الغاء</button>
             </div>
         </div>
     </div>
 </div>
-
 <script>
-    // ===== الاتصال بقاعدة البيانات — نفس الصيدلية =====
     const _sb = supabase.createClient('https://ricoslplbhphydhtrufe.supabase.co', 'sb_publishable_k6LgEuwPLdCsBMCFC12wfQ_BSOJotuw');
-    let currentRes = null;
-    let lastCount = 0;
-    let refreshTimer = 0;
-    let activeOrderId = null;
-    let chatChannel = null;
-    let statusChannel = null;
-    let msgIds = new Set();
-    let historyOrders = [];
-    let currentActiveOrders = [];
-    // ===== صوت التنبيه =====
-    const sound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-    // polling احتياطي للرسائل
+    let currentRes = null, lastCount = 0, refreshTimer = 0;
+    let activeOrderId = null, chatChannel = null, statusChannel = null;
+    let msgIds = new Set(), historyOrders = [], currentActiveOrders = [];
+    let _archivedOrderIds = new Set(); // معرفات الطلبات التي أُرشفت ولا يجب إعادة عرضها
     let _msgPollInterval = null;
+    const sound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+
+    const TYPE_CONFIG = {
+        flowers: { label: 'ورود', icon: '🌸', color: '#e91e8c' },
+        sweets:  { label: 'حلويات', icon: '🍬', color: '#8e44ad' },
+        gifts:   { label: 'هدايا', icon: '🎁', color: '#e67e22' },
+        other:   { label: 'متجر', icon: '🛍️', color: '#16a085' },
+    };
+    function getCfg(t) { return TYPE_CONFIG[t] || TYPE_CONFIG['other']; }
 
     function initAudio() { sound.play().then(() => { sound.pause(); sound.currentTime = 0; }).catch(() => {}); }
-
     function setVSize(type) {
-        const container = document.getElementById('app-container');
-        if(type === 'mobile') { container.style.width = '375px'; container.style.height = '667px'; }
-        else if(type === 'tablet') { container.style.width = '768px'; container.style.height = '1024px'; }
-        else { container.style.width = '100vw'; container.style.height = '100vh'; }
+        const c = document.getElementById('app-container');
+        if(type === 'mobile') { c.style.width = '375px'; c.style.height = '667px'; }
+        else if(type === 'tablet') { c.style.width = '768px'; c.style.height = '1024px'; }
+        else { c.style.width = '100vw'; c.style.height = '100vh'; }
     }
 
-    // ===== تسجيل الدخول: يجلب من جدول restaurants بنفس حقل access_code =====
     async function checkAuth() {
         const email = document.getElementById('login-email').value.trim();
-        const code = document.getElementById('login-code').value.trim();
-        if(!email || !code) { alert('يرجى إدخال البريد وكود التفعيل'); return; }
-        // البحث في جدول المتاجر (نفس جدول المطاعم لكن مع فلتر الشريك الخارجي)
+        const code  = document.getElementById('login-code').value.trim();
         const { data } = await _sb.from('restaurants').select('*').eq('email', email).eq('access_code', code).single();
-        if (data) {
-            currentRes = data;
-            localStorage.setItem('sh_store_session', JSON.stringify(data));
-            startApp();
-        } else {
-            alert('بيانات الدخول غير صحيحة');
-        }
+        if (data) { currentRes = data; localStorage.setItem('sh_store_session', JSON.stringify(data)); startApp(); }
+        else alert('بيانات الدخول غير صحيحة');
     }
 
     function startApp() {
@@ -213,11 +171,9 @@
         if (session) currentRes = JSON.parse(session);
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('main-content').style.display = 'flex';
-        document.getElementById('display-res-name').innerText = currentRes.name || 'المتجر';
-        // عرض نوع المتجر
-        const storeTypeMap = { flowers: '🌸 متجر ورود', sweets: '🍬 متجر حلويات', gifts: '🎁 متجر هدايا' };
-        const stTypeDisplay = storeTypeMap[currentRes.specialty_type] || '🛍️ متجر';
-        document.getElementById('display-store-type').innerText = stTypeDisplay;
+        document.getElementById('display-res-name').innerText = currentRes.name;
+        const cfg = getCfg(currentRes.specialty_type);
+        document.getElementById('store-type-label').innerText = cfg.icon + ' ' + cfg.label;
         loadOrders(true);
         loadHistory();
         setInterval(() => {
@@ -228,39 +184,48 @@
     }
 
     async function loadHistory() {
-        if(!currentRes) return;
-        const today = new Date(); today.setHours(0,0,0,0);
-        // ===== المشكلة الثانية: بعد الفاتورة يصبح store_invoice_sent ثم تنتهي عند المتجر =====
-        const { data: all } = await _sb.from('sh_public_orders').select('*')
-            .eq('restaurant_name', currentRes.name)
-            .in('status', ['store_invoice_sent', 'completed', 'cancelled']);
-        if(all) {
+        if (!currentRes) return;
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        // نجلب فقط الطلبات المكتملة فعلاً (completed_consultation) لحساب الأرباح والأرشيف
+        // store_invoice_sent لا يُحسب هنا لأن الطلب لم يُكتمل بعد (العميل لم يُرسل للمندوب)
+        const { data: all } = await _sb.from('sh_public_orders').select('*').eq('restaurant_name', currentRes.name).eq('status', 'completed_consultation');
+        if (all) {
             historyOrders = all;
             const d = all.filter(o => new Date(o.created_at) >= today);
             const calcProfit = (list) => list.reduce((sum, o) => sum + (Number(o.order_price) || 0), 0);
-            document.getElementById('today-profit').innerText = calcProfit(d).toLocaleString();
-            document.getElementById('report-day').innerText = d.length;
-            document.getElementById('p-day').innerText = calcProfit(d).toLocaleString();
+            document.getElementById('today-profit').innerText = calcProfit(d).toLocaleString() + ' ل.س';
+            document.getElementById('report-day').innerText   = d.length;
+            document.getElementById('p-day').innerText        = calcProfit(d).toLocaleString() + ' ل.س';
         }
     }
 
     async function loadOrders(isFirst = false) {
         if (!currentRes) return;
-        // جلب الطلبات النشطة للمتجر (res_type = specialty)
-        const { data: orders } = await _sb.from('sh_public_orders').select('*')
-            .eq('res_type', 'specialty')
-            .in('status', ['searching', 'consulting', 'accepted'])
+
+        // جلب الطلبات بفلتر واسع يشمل كل الاحتمالات
+        const { data: orders, error: ordErr } = await _sb
+            .from('sh_public_orders')
+            .select('*')
+            .eq('restaurant_name', currentRes.name)
+            .in('status', ['consulting', 'accepted', 'pending_store', 'searching'])
             .order('created_at', { ascending: false });
 
-        // فلترة طلبات هذا المتجر تحديداً
-        currentActiveOrders = (orders || []).filter(o =>
-            o.restaurant_name === currentRes.name || Number(o.restaurant_id) === Number(currentRes.id)
-        );
+        console.log('[index5] restaurant_name:', currentRes.name);
+        console.log('[index5] orders found:', orders ? orders.length : 0, orders);
+        if (ordErr) console.error('[index5] loadOrders error:', ordErr);
 
-        if (!isFirst && currentActiveOrders.length > lastCount) {
-            sound.play().catch(() => {});
-            showToast('طلب جديد 🛍️');
-        }
+        // تصفية: لا نعرض الطلبات المؤرشفة محلياً (أُرسلت للمندوب)
+        // أيضاً نتجاهل الطلبات التي صارت searching مع is_consultation=false (ذهبت للمندوب)
+        const _filtered = (orders || []).filter(o => {
+            if (_archivedOrderIds.has(String(o.id))) return false;
+            if (o.status === 'searching' && o.is_consultation === false) {
+                _archivedOrderIds.add(String(o.id));
+                return false;
+            }
+            return true;
+        });
+        currentActiveOrders = _filtered;
+        if (!isFirst && currentActiveOrders.length > lastCount) { sound.play().catch(() => {}); showToast('طلب تواصل جديد! 🛍️'); }
         lastCount = currentActiveOrders.length;
         document.getElementById('stat-count').innerText = currentActiveOrders.length;
         renderOrders(currentActiveOrders);
@@ -268,56 +233,45 @@
 
     function renderOrders(orders) {
         const list = document.getElementById('orders-list');
-        if (orders.length === 0) {
-            list.innerHTML = `<div class="empty-state"><i class="fas fa-check-circle" style="color:var(--pink);"></i><p>الواجهة صافية.. لا توجد طلبات نشطة</p></div>`;
-            return;
-        }
-        list.innerHTML = orders.map(o => `
-            <div class="order-card ${o.status === 'consulting' || o.status === 'accepted' ? 'status-active' : 'status-new'}" id="card-${o.id}">
-                <div style="font-size:9px; opacity:0.6; color:var(--pink);">#${String(o.id).slice(-4)}</div>
-                <div style="font-weight:bold; font-size:13px; margin:5px 0;">${o.customer_name || 'عميل'}</div>
-                <div style="font-size:10px; opacity:0.7; margin-bottom:5px;">${o.specialty_type === 'flowers' ? '🌸 ورود' : o.specialty_type === 'sweets' ? '🍬 حلويات' : o.specialty_type === 'gifts' ? '🎁 هدايا' : '🛍️ طلب'}</div>
-                <button class="btn-act ${o.status === 'consulting' || o.status === 'accepted' ? 'btn-follow' : 'btn-accept'}" onclick="openChat('${o.id}')">
-                    ${o.status === 'consulting' || o.status === 'accepted' ? '🩷 متابعة الطلب' : '✅ قبول الطلب'}
-                </button>
-            </div>
-        `).join('');
+        if (orders.length === 0) { list.innerHTML = '<div class="empty-state"><i class="fas fa-check-circle"></i><p>لا توجد طلبات نشطة</p></div>'; return; }
+        list.innerHTML = orders.map(o => {
+            const cfg      = getCfg(o.specialty_type || currentRes.specialty_type);
+            const isActive = (o.status === 'consulting' || o.status === 'accepted' || o.status === 'searching');
+            return '<div class="order-card ' + (isActive ? 'status-active' : 'status-new') + '" id="card-' + o.id + '" style="border-right: 4px solid ' + cfg.color + ';">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+                '<span style="font-size:9px; opacity:0.6;">#' + String(o.id).slice(-6) + '</span>' +
+                '<span class="order-type-tag" style="background:' + cfg.color + '22; color:' + cfg.color + ';">' + cfg.icon + ' ' + cfg.label + '</span>' +
+                '</div>' +
+                '<div style="font-weight:bold; font-size:13px; margin:4px 0;">' + (o.customer_name || 'عميل شاهين') + '</div>' +
+                '<div style="font-size:10px; opacity:0.5; margin-bottom:6px;">' + new Date(o.created_at).toLocaleTimeString('ar-SY', {hour:'2-digit', minute:'2-digit'}) + '</div>' +
+                '<button class="btn-act ' + (isActive ? 'btn-follow' : 'btn-accept') + '" onclick="openChat(\'' + o.id + '\')">' +
+                (isActive ? 'متابعة الطلب' : 'قبول التواصل') +
+                '</button></div>';
+        }).join('');
     }
 
     async function openChat(orderId) {
-        // تحديد نوع المعرف تلقائياً
-        activeOrderId = isNaN(orderId) ? String(orderId) : Number(orderId);
+        activeOrderId = String(orderId); // إصلاح المشكلة الأولى: تحويل ID لنص دائماً لضمان مطابقة الرسائل
         msgIds.clear();
-        // تحديث الحالة إلى accepted
-        await _sb.from('sh_public_orders').update({
-            status: 'accepted',
-            restaurant_id: currentRes.id,
-            restaurant_name: currentRes.name
-        }).eq('id', activeOrderId);
-
+        await _sb.from('sh_public_orders').update({ status: 'accepted', restaurant_name: currentRes.name }).eq('id', activeOrderId);
         document.getElementById('active-chat-box').style.display = 'flex';
         document.getElementById('chat-flow').innerHTML = '';
-
-        // مستمع لتغيير الحالة
         if (statusChannel) _sb.removeChannel(statusChannel);
-        statusChannel = _sb.channel('st_store_' + activeOrderId)
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'sh_public_orders', filter: `id=eq.${activeOrderId}` }, p => {
-                if (p.new.status === 'store_invoice_sent' || p.new.status === 'cancelled') {
-                    closeChat();
-                }
-            }).subscribe();
-
-        // جلب بيانات الطلب
+        statusChannel = _sb.channel('st_store_' + activeOrderId).on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'sh_public_orders', filter: 'id=eq.' + activeOrderId }, p => {
+            if (p.new.status === 'cancelled') closeChat();
+            // إذا العميل أرسل الطلب للمندوب يدوياً (status=searching وis_consultation=false) نُغلق ونُرشف
+            if (p.new.status === 'searching' && p.new.is_consultation === false) {
+                archiveAndClose(p.new);
+            }
+            // completed_consultation: تم إغلاق الطلب بشكل نهائي
+            if (p.new.status === 'completed_consultation') closeChat();
+        }).subscribe();
         const { data: order } = await _sb.from('sh_public_orders').select('*').eq('id', activeOrderId).single();
-        document.getElementById('client-name-chat').innerText = order?.customer_name || 'عميل شاهين';
-        document.getElementById('active-order-id').innerText = '#' + activeOrderId + (order?.specialty_type ? ' | ' + (order.specialty_type === 'flowers' ? '🌸' : order.specialty_type === 'sweets' ? '🍬' : '🎁') : '');
-
-        // تحميل الرسائل السابقة
+        document.getElementById('client-name-chat').innerText = order ? (order.customer_name || 'عميل شاهين') : 'عميل شاهين';
+        document.getElementById('active-order-id').innerText  = '#' + String(activeOrderId).slice(-8);
         const { data: msgs } = await _sb.from('sh_messages').select('*').eq('order_id', activeOrderId).order('created_at', { ascending: true });
         if (msgs) msgs.forEach(m => { msgIds.add(m.id); addMsgToUI(m.message, m.sender); });
         scrollChat();
-
-        // ===== إصلاح المشكلة الأولى: Realtime channel لاستقبال الرسائل فوراً =====
         if (chatChannel) _sb.removeChannel(chatChannel);
         chatChannel = _sb.channel('ch_store_msgs_' + activeOrderId)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sh_messages' }, p => {
@@ -328,54 +282,68 @@
                 addMsgToUI(m.message, m.sender);
                 if (m.sender === 'client') { sound.play().catch(() => {}); showToast('رسالة جديدة من العميل 💬'); }
                 scrollChat();
-            })
-            .subscribe((status) => {
-                console.log('[SHAHEN STORE] channel status:', status);
-            });
-
-        // ===== polling احتياطي كل 3 ثواني لضمان وصول الرسائل =====
+            }).subscribe();
         if (_msgPollInterval) clearInterval(_msgPollInterval);
         _msgPollInterval = setInterval(async () => {
             if (!activeOrderId) { clearInterval(_msgPollInterval); return; }
             const { data: newMsgs } = await _sb.from('sh_messages').select('*').eq('order_id', activeOrderId).order('created_at', { ascending: true });
             if (newMsgs) {
+                let hasNew = false;
                 newMsgs.forEach(m => {
                     if (msgIds.has(m.id)) return;
                     msgIds.add(m.id);
                     addMsgToUI(m.message, m.sender);
                     if (m.sender === 'client') { sound.play().catch(() => {}); showToast('رسالة جديدة من العميل 💬'); }
+                    hasNew = true;
                 });
-                scrollChat();
+                if (hasNew) scrollChat();
             }
-        }, 3000);
+        }, 1500);
     }
 
-    // ===== إصلاح المشكلة الأولى: إرسال الرسائل يعمل بشكل كامل =====
+    // ===================================================
+    // المشكلة 1 الحل: sendMsg دالة مستقلة منفصلة عن openChat
+    // ===================================================
     async function sendMsg() {
         const inp = document.getElementById('chat-input');
         const text = inp.value.trim();
         if (!text || !activeOrderId) return;
         inp.value = '';
-        // إضافة الرسالة للواجهة فوراً
+        inp.disabled = true; // منع الإرسال المزدوج
         addMsgToUI(text, 'store');
         scrollChat();
-        // حفظ الرسالة في قاعدة البيانات
-        const { data: saved, error: msgErr } = await _sb.from('sh_messages').insert({
-            order_id: activeOrderId,
-            sender: 'store',
-            message: text
-        }).select().single();
-        if (msgErr) {
-            console.error('[SHAHEN STORE sendMsg] فشل إرسال الرسالة:', msgErr);
-            showToast('فشل إرسال الرسالة ❌');
-        }
+        // إصلاح المشكلة الأولى: إرسال order_id كرقم إذا كان رقمياً أو كـ UUID
+        const _oidForInsert = isNaN(activeOrderId) ? activeOrderId : Number(activeOrderId);
+        const { data: saved, error: msgErr } = await _sb.from('sh_messages').insert({ order_id: _oidForInsert, sender: 'store', message: text }).select().single();
+        if (msgErr) { showToast('فشل ارسال الرسالة ❌'); console.error('sendMsg error:', msgErr); }
         if (saved) msgIds.add(saved.id);
+        inp.disabled = false; // إعادة تفعيل الإدخال بعد الإرسال
+        inp.focus();
+    }
+
+    // ===================================================
+    // المشكلة 2 و 3 الحل: أرشفة الطلب وإخراجه نهائياً عند تحويله للمندوب
+    // ===================================================
+    async function archiveAndClose(orderData) {
+        const archivedId = activeOrderId;
+        // نضيف الطلب لقائمة الأرشيف المحلي حتى يظهر في السابقة
+        if (orderData && !historyOrders.find(o => String(o.id) === String(archivedId))) {
+            historyOrders.unshift({ ...orderData, id: archivedId });
+        }
+        // نحذف الطلب من القائمة النشطة نهائياً
+        currentActiveOrders = currentActiveOrders.filter(o => String(o.id) !== String(archivedId));
+        // نمنع ظهوره مجدداً في loadOrders بحفظ معرفاته في قائمة محلية
+        _archivedOrderIds.add(String(archivedId));
+        renderOrders(currentActiveOrders);
+        closeChat();
+        showToast('تم تحويل الطلب للمندوب ✅ — انتهت مهمة المتجر');
+        loadHistory();
     }
 
     function addMsgToUI(text, sender) {
         const flow = document.getElementById('chat-flow');
         const wrap = document.createElement('div');
-        wrap.className = `msg ${sender === 'store' ? 'store' : 'client'}`;
+        wrap.className = 'msg ' + (sender === 'store' ? 'store' : 'client');
         wrap.style.alignSelf = sender === 'store' ? 'flex-end' : 'flex-start';
         wrap.innerText = text;
         flow.appendChild(wrap);
@@ -397,59 +365,54 @@
         return total;
     }
 
-    // ===== إصلاح المشكلة الثانية: بعد الفاتورة يُحذف الطلب من النشطة وينتقل للأرشيف =====
-    async function completeOrder() {
-        const details = document.getElementById('order-items-input').value.trim();
+    async function completeConsultation() {
+        const details    = document.getElementById('order-items-input').value.trim();
         const totalPrice = calculateTotal();
-        if (!details || totalPrice === 0) { alert('يرجى كتابة الأصناف وأسعارها بشكل صحيح'); return; }
-
+        if (!details || totalPrice === 0) { alert('يرجى كتابة الاصناف واسعارها بشكل صحيح'); return; }
         const targetId = activeOrderId;
-        const finalInvoice = `🛍️ فاتورة متجر ${currentRes.name}:\n------------------\n${details}\n------------------\n💰 الإجمالي النهائي: ${totalPrice.toLocaleString()} ل.س`;
+        const finalInvoice = '🧾 تفاصيل فاتورة ' + currentRes.name + ':\n------------------\n' + details + '\n------------------\n💰 الاجمالي النهائي: ' + totalPrice.toLocaleString() + ' ل.س';
+        // جلب بيانات الطلب لاستخدامها في الأرشيف
+        const { data: order } = await _sb.from('sh_public_orders').select('customer_name').eq('id', targetId).single();
 
-        // ===== تغيير الحالة إلى store_invoice_sent: ينهي الطلب عند المتجر ويُمكّن العميل من إرساله للمندوب =====
+        // إصلاح المشكلة الثانية: نحفظ الفاتورة والسعر ونُحدِّث الحالة إلى store_invoice_sent
+        // العميل هو من يقرر إرسالها للمندوب — لكن يجب تغيير الحالة لإزالة الطلب من النشطة
         const { error } = await _sb.from('sh_public_orders').update({
-            status: 'store_invoice_sent',
             order_details: finalInvoice,
-            order_price: totalPrice
+            order_price: totalPrice,
+            total: totalPrice,
+            restaurant_note: 'INVOICE_SENT:' + totalPrice,
+            status: 'store_invoice_sent'
         }).eq('id', targetId);
 
-        if(!error) {
-            // إرسال الفاتورة كرسالة في المحادثة
+        if (!error) {
+            // إرسال رسالة الفاتورة في المحادثة حتى يراها العميل ويقرر
             await _sb.from('sh_messages').insert({ order_id: targetId, sender: 'store', message: finalInvoice });
-            // ===== إزالة الطلب من النشطة فوراً =====
+            document.getElementById('order-details-modal').style.display = 'none';
+            showToast('تم إرسال الفاتورة للعميل ✅ — انتهت مهمة المتجر');
+            // المشكلة 3: بعد إرسال الفاتورة انتهت مهمة المتجر → نؤرشف الطلب ونُغلق الدردشة
+            _archivedOrderIds.add(String(targetId));
             currentActiveOrders = currentActiveOrders.filter(o => String(o.id) !== String(targetId));
             renderOrders(currentActiveOrders);
-            document.getElementById('order-details-modal').style.display = 'none';
-            showToast('تم إرسال الفاتورة بنجاح ✅');
-            // ===== إغلاق الدردشة وانتهاء الطلب عند المتجر =====
+            // نضيف الطلب للأرشيف المحلي للعرض في السابقة
+            const _archObj = { id: targetId, customer_name: order ? order.customer_name : 'عميل شاهين', order_details: finalInvoice, order_price: totalPrice, created_at: new Date().toISOString() };
+            if (!historyOrders.find(o => String(o.id) === String(targetId))) historyOrders.unshift(_archObj);
             closeChat();
-            // تحديث الأرشيف
             loadHistory();
-        } else {
-            alert('خطأ: ' + error.message);
-        }
+        } else { alert('خطا: ' + error.message); }
     }
 
     async function cancelDueToNoResponse() {
         if (!activeOrderId) return;
-        if (!confirm('هل أنت متأكد من إلغاء الطلب بسبب عدم رد العميل؟')) return;
+        if (!confirm('هل انت متاكد من الغاء الطلب؟')) return;
         const targetId = activeOrderId;
-        const { error } = await _sb.from('sh_public_orders').update({
-            status: 'cancelled',
-            order_details: 'تم الإلغاء لعدم رد العميل'
-        }).eq('id', targetId);
-        if (!error) {
-            showToast('تم إلغاء الطلب ⏳');
-            closeChat();
-        } else {
-            alert('خطأ أثناء الإلغاء: ' + error.message);
-        }
+        const { error } = await _sb.from('sh_public_orders').update({ status: 'cancelled', order_details: 'تم الالغاء لعدم رد العميل' }).eq('id', targetId);
+        if (!error) { showToast('تم الغاء الطلب'); closeChat(); }
+        else alert('خطا: ' + error.message);
     }
 
     function closeChat() {
-        if (chatChannel) _sb.removeChannel(chatChannel);
+        if (chatChannel)   _sb.removeChannel(chatChannel);
         if (statusChannel) _sb.removeChannel(statusChannel);
-        // إيقاف الـ polling
         if (_msgPollInterval) { clearInterval(_msgPollInterval); _msgPollInterval = null; }
         document.getElementById('active-chat-box').style.display = 'none';
         activeOrderId = null;
@@ -457,23 +420,20 @@
         loadHistory();
     }
 
-    function openReportModal(period) {
+    function openReportModal() {
         const container = document.getElementById('report-items-container');
-        container.innerHTML = historyOrders.map(o => `
-            <div class="report-item" style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 10px; margin-bottom: 10px; border-right: 3px solid var(--pink);">
-                <b>${o.customer_name}</b><br>
-                <small>#${o.id} | ${new Date(o.created_at).toLocaleString('ar-SY')}</small>
-                <div style="font-size:10px; color:var(--pink); white-space:pre-line; margin-top:5px;">${o.order_details || ''}</div>
-                <div style="font-size:11px; margin-top:4px;">💰 ${(o.order_price || 0).toLocaleString()} ل.س</div>
-            </div>
-        `).join('') || '<p style="text-align:center;">لا توجد بيانات</p>';
+        container.innerHTML = historyOrders.map(o =>
+            '<div style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 10px; margin-bottom: 10px; border-right: 3px solid var(--gold);">' +
+            '<b>' + (o.customer_name || '') + '</b><br>' +
+            '<small>#' + o.id + ' | ' + new Date(o.created_at).toLocaleString('ar-SY') + '</small>' +
+            '<div style="font-size:10px; color:var(--gold); white-space:pre-line; margin-top:5px;">' + (o.order_details || '') + '</div>' +
+            '</div>'
+        ).join('') || '<p style="text-align:center;">لا توجد بيانات</p>';
         document.getElementById('report-modal').style.display = 'flex';
     }
-
     function closeReportModal() { document.getElementById('report-modal').style.display = 'none'; }
     function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3000); }
     function logout() { localStorage.removeItem('sh_store_session'); location.reload(); }
-
     window.onload = () => { if (localStorage.getItem('sh_store_session')) startApp(); };
 </script>
 </body>
