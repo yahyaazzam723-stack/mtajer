@@ -3,161 +3,478 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>شاهين إكسبريس | عهد الأمانة</title>
+    <title>بوابة المتاجر | ورود وحلويات 🌸</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { 
-            --gold: #d4af37; 
-            --bg-purple: #0a010a; 
-            --glass: rgba(25, 5, 25, 0.98); 
-            --text: #fff; 
-            --danger: #e74c3c; 
-        }
+        /* ===== المتغيرات: اللون الزهري للمتاجر (مختلف تماماً عن الأزرق الصيدلية) ===== */
+        :root { --gold: #d4af37; --pink: #e91e8c; --pink-light: rgba(233,30,140,0.15); --pink-dark: rgba(233,30,140,0.08); --p-dark: #0a010a; --p-main: #1d051d; --glass: rgba(255, 255, 255, 0.05); --success: #27ae60; --danger: #e74c3c; --info: #e91e8c; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background: radial-gradient(circle, var(--p-main), var(--p-dark)); color: #fff; font-family: sans-serif; overflow-x: hidden; min-height: 100vh; display: flex; justify-content: center; align-items: center; transition: all 0.3s ease; }
+        #app-container { position: relative; overflow: hidden; background: radial-gradient(circle, var(--p-main), var(--p-dark)); width: 100vw; height: 100vh; margin: auto; border: 1px solid rgba(233,30,140,0.2); display: flex; flex-direction: column; }
 
-        * { box-sizing: border-box; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); -webkit-tap-highlight-color: transparent; }
-        body, html { margin: 0; padding: 0; height: 100vh; background: var(--bg-purple); color: var(--text); font-family: -apple-system, sans-serif; overflow: hidden; }
+        .view-controls { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 8px 15px; border-radius: 50px; border: 1px solid var(--pink); backdrop-filter: blur(5px); }
+        .view-btn { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: var(--glass); color: #fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; }
 
-        /* الإطار الإمبراطوري والإشعارات الداخلية */
-        #internal-notify { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: rgba(0,0,0,0.95); border: 1px solid var(--gold); padding: 18px; border-radius: 20px; z-index: 30000; text-align: center; color: var(--gold); font-weight: bold; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-        #internal-notify.show { top: 20px; }
+        .auth-overlay { position: fixed; inset: 0; background: var(--p-dark); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .auth-card { background: var(--glass); backdrop-filter: blur(10px); padding: 30px; border-radius: 20px; border: 1px solid var(--pink); width: 100%; max-width: 400px; text-align: center; }
+        input { width: 100%; padding: 15px; margin-bottom: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; text-align: center; outline: none; }
+        .btn-login { width: 100%; padding: 15px; background: var(--pink); border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: #fff; }
 
-        .shahen-logo-fixed { width: 110px; height: 110px; border-radius: 50%; border: 3px solid var(--gold); margin: 0 auto 10px; background: url('https://i.postimg.cc/3RmMjYNd/Whats-App-Image-2026-04-10-at-6-22-30-PM.jpg') no-repeat center/cover; box-shadow: 0 0 25px rgba(212,175,55,0.3); }
+        header { padding: 60px 20px 15px; background: var(--glass); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(233,30,140,0.3); flex-shrink: 0; }
+        .res-name { font-weight: bold; color: var(--pink); }
 
-        /* رادار الإلغاء الملكي */
-        #cancel-radar { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-purple); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; text-align: center; }
-        .large-shahen-logo { width: 180px; height: 180px; border-radius: 50%; border: 4px solid var(--gold); margin-bottom: 25px; background: url('https://i.postimg.cc/3RmMjYNd/Whats-App-Image-2026-04-10-at-6-22-30-PM.jpg') no-repeat center/cover; box-shadow: 0 0 40px rgba(212,175,55,0.4); }
-        .radar-box { font-size: 42px; font-weight: bold; color: var(--gold); margin-bottom: 10px; }
-        .pledge-quote { color: var(--gold); font-size: 16px; font-weight: bold; margin-bottom: 30px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; flex-shrink: 0; }
+        .stat-card { background: var(--glass); padding: 12px; border-radius: 12px; border-right: 3px solid var(--pink); cursor: pointer; }
+        .stat-val { font-size: 20px; font-weight: bold; margin-top: 5px; }
 
-        /* الفاتورة المفصلة */
-        .bill-card { background: #111; border-radius: 25px; border: 1px solid #222; padding: 25px; margin-top: 15px; }
-        .bill-header { color: var(--gold); font-weight: bold; padding-bottom: 12px; border-bottom: 1px solid #222; margin-bottom: 15px; display: flex; justify-content: space-between; }
-        .bill-item { display: flex; align-items: center; gap: 15px; padding: 12px 0; border-bottom: 1px dashed #1a1a1a; }
-        .bill-item img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; border: 1px solid #222; }
-        .bill-summary { background: rgba(212,175,55,0.02); border-radius: 15px; padding: 15px; margin-top: 15px; font-size: 14px; }
+        .history-report { padding: 0 15px 15px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .h-box { background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px; text-align: center; border: 1px solid rgba(233,30,140,0.15); cursor: pointer; }
+        .h-box b { font-size: 14px; color: var(--pink); }
+        .p-box { margin-top: 4px; font-size: 9px; color: var(--success); }
 
-        .app-shell { width: 100%; max-width: 500px; height: 100%; margin: auto; position: relative; display: flex; flex-direction: column; border-left: 1px solid rgba(212,175,55,0.1); border-right: 1px solid rgba(212,175,55,0.1); }
-        .page { display: none; padding: 0 25px 25px; flex-direction: column; flex-grow: 1; overflow-y: auto; z-index: 20; }
-        .page.active { display: flex; animation: appleFade 0.5s ease; }
-        @keyframes appleFade { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; } }
+        #orders-list { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; overflow-y: auto; flex: 1; padding-bottom: 30px; align-content: start; }
+        .order-card { background: var(--glass); border-radius: 15px; padding: 12px; border: 1px solid rgba(233,30,140,0.2); position: relative; display: flex; flex-direction: column; justify-content: space-between; height: fit-content; transition: 0.3s; }
 
-        .card { background: rgba(255,255,255,0.02); border-radius: 25px; padding: 18px; margin-bottom: 15px; display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.04); }
-        .card img { width: 65px; height: 65px; border-radius: 16px; object-fit: cover; margin-left: 15px; border: 1px solid var(--gold); }
-        .btn-gold { background: var(--gold); color: #000; border: none; padding: 18px; border-radius: 18px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; }
-        
-        .tab-bar { height: 90px; background: #000; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid rgba(212,175,55,0.1); }
-        .tab-item { color: #444; text-align: center; font-size: 11px; cursor: pointer; position: relative; }
-        .tab-item.active { color: var(--gold); }
-        .badge { position: absolute; top: -5px; right: -5px; background: var(--danger); color: #fff; font-size: 10px; padding: 3px 7px; border-radius: 50%; font-weight: bold; }
+        /* ===== ألوان المتاجر: زهري بالكامل قبل وبعد القبول ===== */
+        .status-new { border-color: var(--pink) !important; box-shadow: 0 0 8px rgba(233,30,140,0.2); }
+        .status-active { border-color: var(--pink) !important; box-shadow: 0 0 10px rgba(233,30,140,0.35) !important; background: rgba(233,30,140,0.07) !important; }
 
-        #modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-purple); z-index: 15000; display: none; flex-direction: column; }
+        .btn-act { padding: 8px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; width: 100%; margin-top: 8px; font-size: 11px; }
+        /* ===== زر القبول والمتابعة: زهري ===== */
+        .btn-accept { background: var(--pink); color: #fff; }
+        .btn-follow { background: var(--pink); color: #fff; opacity: 0.9; }
+
+        #report-modal { display: none; position: absolute; inset: 0; background: var(--p-dark); z-index: 3000; flex-direction: column; }
+        .modal-header { padding: 15px; background: var(--glass); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--pink); }
+        .report-list { flex: 1; overflow-y: auto; padding: 15px; }
+
+        /* ===== منطقة الدردشة: زهري ===== */
+        #active-chat-box { display: none; position: absolute; inset: 0; background: var(--p-dark); z-index: 2000; flex-direction: column; }
+        .chat-header { padding: 15px; background: var(--glass); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(233,30,140,0.3); }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 800px; margin: 0 auto; }
+        .msg { max-width: 85%; padding: 10px 15px; border-radius: 15px; font-size: 14px; word-break: break-word; }
+        /* ===== رسائل المتجر: خلفية زهري ===== */
+        .msg.store { background: var(--pink); color: #fff; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .msg.client { background: #333; color: #fff; align-self: flex-start; border-bottom-left-radius: 2px; }
+
+        .chat-input-area { padding: 15px; display: flex; gap: 10px; background: var(--glass); border-top: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 800px; margin: 0 auto; }
+        .chat-input-area input { margin: 0; flex: 1; padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid #333; color: #fff; }
+        /* ===== زر الفاتورة: زهري ===== */
+        .btn-finish { background: var(--pink); color: #fff; border: none; border-radius: 12px; padding: 14px; font-weight: bold; cursor: pointer; margin: 0 auto 5px; width: calc(100% - 30px); max-width: 770px; font-size: 14px; }
+        .btn-cancel-chat { background: rgba(255,255,255,0.1); color: var(--danger); border: 1px solid var(--danger); border-radius: 12px; padding: 10px; font-weight: bold; cursor: pointer; margin: 0 auto 15px; width: calc(100% - 30px); max-width: 770px; font-size: 12px; }
+
+        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--pink); color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: bold; display: none; z-index: 9999; }
+        .sync-loader { position: fixed; top: 0; left: 0; height: 3px; background: var(--pink); z-index: 9999; transition: width 0.1s linear; }
+        .empty-state { text-align: center; opacity: 0.3; margin-top: 50px; grid-column: span 2; }
+
+        #order-details-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 5000; align-items: center; justify-content: center; padding: 20px; }
+        .details-card { background: var(--p-main); border: 2px solid var(--pink); padding: 20px; border-radius: 20px; width: 100%; max-width: 400px; }
+        .details-card textarea { width: 100%; height: 120px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 10px; margin: 10px 0; resize: none; font-family: sans-serif; font-size: 14px; }
+        .total-box { background: rgba(233,30,140,0.1); border: 1px dashed var(--pink); border-radius: 10px; padding: 10px; text-align: center; margin-bottom: 15px; }
     </style>
 </head>
-<body>
+<body onclick="initAudio()">
 
-<div id="internal-notify"> <span id="notify-text"></span></div>
-
-<div id="cancel-radar">
-    <div class="large-shahen-logo"></div>
-    <div class="radar-box"><span id="r-timer">15</span>ث</div>
-    <div class="pledge-quote">﴿ وَأَوْفُوا بِعَهْدِ اللَّهِ ﴾</div>
-    <button class="btn-gold" style="width:240px; background:var(--danger); color:#fff; border-radius:50px;" onclick="abortOrder()">إلغاء الطلب (تراجع) ✖</button>
+<div class="view-controls">
+    <div class="view-btn" onclick="setVSize('mobile')"><i class="fas fa-mobile-alt"></i></div>
+    <div class="view-btn" onclick="setVSize('tablet')"><i class="fas fa-tablet-alt"></i></div>
+    <div class="view-btn" onclick="setVSize('laptop')"><i class="fas fa-desktop"></i></div>
 </div>
 
-<div id="modal-overlay">
-    <div style="padding:45px 20px 20px; background:#000; border-bottom:1px solid var(--gold); display:flex; align-items:center; gap:15px;"><i class="fas fa-chevron-right" onclick="closeModal()" style="color:var(--gold); font-size:24px;"></i><b id="modal-title">تواصل مع القائد يحيى</b></div>
-    <div id="modal-content" style="flex:1; padding:20px; overflow-y:auto;"></div>
-</div>
+<div id="app-container">
+    <div class="sync-loader" id="sync-bar"></div>
+    <div id="toast"></div>
 
-<div class="app-shell">
-    
-    <div id="p-login" class="page active" style="justify-content:center; text-align:center;">
-        <div class="shahen-logo-fixed"></div>
-        <h2 style="color:var(--gold); margin:0 0 25px;">انضم إلى صقور شاهين</h2>
-        <input type="text" id="uName" style="width:100%; padding:18px; background:#111; border:1px solid #333; border-radius:15px; color:#fff; text-align:center; margin-bottom:12px; outline:none;" placeholder="الاسم الكامل">
-        <input type="tel" id="uPhone" style="width:100%; padding:18px; background:#111; border:1px solid #333; border-radius:15px; color:#fff; text-align:center; margin-bottom:20px; outline:none;" placeholder="رقم التواصل">
-        <div style="background:rgba(212,175,55,0.03); border:1px solid rgba(212,175,55,0.1); border-radius:20px; padding:20px; margin-bottom:25px; text-align:right;">
-            <p style="font-size:11px; line-height:1.7; color:#ccc;">أتعهد أنا/ <b id="p-name-val">..........</b>، أمام الله ثم شركة صقور شاهين، بالالتزام بعهد الأمانة وعدم إلغاء الطلبات.</p>
-            <div style="display:flex; align-items:center; gap:12px; justify-content:center; margin-top:15px;"><input type="checkbox" id="pledge-check" style="width:22px; height:22px; accent-color:var(--gold);"><label for="pledge-check" style="font-size:13px; color:var(--gold); font-weight:bold;">أوافق وأعاهد الله</label></div>
+    <div id="auth-screen" class="auth-overlay">
+        <div class="auth-card">
+            <img src="https://i.postimg.cc/QxzPkmPf/Whats-App-Image-2026-04-10-at-6-22-30-PM-t7edrz.jpg" width="80" style="border-radius:20px; margin-bottom:15px;">
+            <h2 style="color:var(--pink);">بوابة المتاجر 🌸</h2>
+            <p style="font-size:12px; opacity:0.7; margin-bottom:15px;">ورود | حلويات | هدايا</p>
+            <input type="email" id="login-email" placeholder="البريد الإلكتروني">
+            <input type="password" id="login-code" placeholder="كود التفعيل">
+            <button class="btn-login" onclick="checkAuth()">دخول المتجر 🛍️</button>
         </div>
-        <button class="btn-gold" onclick="login()">دخول سريع</button>
     </div>
 
-    <div id="p-home" class="page">
-        <div style="padding:45px 0 15px; text-align:right;"><h1 style="color:var(--gold); margin:0; font-size:35px;">اكتشف</h1></div>
-        <div style="padding-bottom:20px;"><div style="background:rgba(255,255,255,0.05); border-radius:15px; padding:14px; display:flex; gap:12px; border:1px solid #222;"><i class="fas fa-search" style="color:#555"></i><input type="text" id="g-search" placeholder="بحث عن مطعم.." style="background:none; border:none; color:#fff; width:100%; outline:none;" onkeyup="renderPlaces()"></div></div>
-        <div id="res-list"></div>
+    <div id="main-content" style="display:none; flex-direction:column; height:100vh;">
+        <header>
+            <div>
+                <div class="res-name" id="display-res-name">اسم المتجر</div>
+                <div id="display-store-type" style="font-size:10px; opacity:0.7; color:var(--pink);"></div>
+            </div>
+            <button onclick="logout()" style="background:none; border:none; color:var(--danger); font-size:18px;"><i class="fas fa-power-off"></i></button>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card"><span>طلبات قادمة</span><div id="stat-count" class="stat-val">0</div></div>
+            <div class="stat-card" onclick="openReportModal('day')"><span>أرباح اليوم</span><div id="today-profit" class="stat-val" style="color:var(--pink);">0</div></div>
+        </div>
+
+        <div class="history-report">
+            <div class="h-box" onclick="openReportModal('day')"><span>اليوم</span><b id="report-day">0</b><div class="p-box" id="p-day">0</div></div>
+            <div class="h-box" onclick="openReportModal('week')"><span>الأسبوع</span><b id="report-week">0</b><div class="p-box" id="p-week">0</div></div>
+            <div class="h-box" onclick="openReportModal('month')"><span>الشهر</span><b id="report-month">0</b><div class="p-box" id="p-month">0</div></div>
+        </div>
+
+        <div id="orders-list"></div>
     </div>
 
-    <div id="p-menu" class="page"><div id="menu-header" style="margin:25px 0; display:flex; align-items:center; gap:15px;"></div><div id="items-list"></div></div>
-    
-    <div id="p-cart" class="page"><div style="padding:40px 0 10px;"><h1>الفاتورة الملكية</h1></div><div id="cart-content"></div><div id="cart-summary"></div></div>
+    <div id="report-modal">
+        <div class="modal-header">
+            <b id="report-title">الأرشيف</b>
+            <button onclick="closeReportModal()" style="background:none; border:none; color:#fff; font-size:20px;"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="report-list" id="report-items-container"></div>
+    </div>
 
-    <div id="p-history" class="page"><div style="padding:40px 0 10px;"><h1>مهامي 🦅</h1></div><h4 style="color:var(--gold); margin-bottom:12px;">طلبات نشطة</h4><div id="active-orders"></div><h4 style="color:#444; margin-top:25px; border-top:1px solid #111; padding-top:20px;">سابقة</h4><div id="past-orders"></div></div>
+    <!-- ===== منطقة الدردشة: مستقلة تماماً بألوان زهري ===== -->
+    <div id="active-chat-box">
+        <div class="chat-header">
+            <div>
+                <div id="client-name-chat" style="font-weight:bold; font-size:16px; color:var(--pink);">...</div>
+                <div id="active-order-id" style="font-size:10px; opacity:0.6;">...</div>
+            </div>
+            <button onclick="closeChat()" style="background:none; border:none; color:#fff; font-size:22px;"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="chat-messages" id="chat-flow"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="اكتب ردك هنا..." onkeydown="if(event.key==='Enter') sendMsg()">
+            <!-- ===== إصلاح المشكلة الأولى: زر الإرسال متصل بـ sendMsg ===== -->
+            <button onclick="sendMsg()" style="background:var(--pink); border:none; padding:10px 15px; border-radius:10px; color:#fff;"><i class="fas fa-paper-plane"></i></button>
+        </div>
+        <!-- ===== إصلاح المشكلة الثانية: الفاتورة تنهي الطلب وتحذفه من النشطة ===== -->
+        <button class="btn-finish" onclick="showDetailsBox()">إرسال الفاتورة للعميل 🛍️</button>
+        <button class="btn-cancel-chat" onclick="cancelDueToNoResponse()">إلغاء الطلب (عدم رد العميل) ⏳</button>
+    </div>
 
-    <div id="tab-bar" class="tab-bar" style="display:none"><div class="tab-item active" onclick="nav('p-home')"><i class="fas fa-home fa-lg"></i><br>الرئيسية</div><div class="tab-item" onclick="nav('p-cart')"><span id="cart-badge" class="badge" style="display:none">0</span><i class="fas fa-file-invoice-dollar fa-lg"></i><br>الفاتورة</div><div class="tab-item" onclick="nav('p-history')"><i class="fas fa-clock fa-lg"></i><br>طلباتي</div></div>
+    <!-- ===== نافذة إدخال الفاتورة: زهري ===== -->
+    <div id="order-details-modal">
+        <div class="details-card">
+            <h3 style="color:var(--pink); margin:0 0 10px 0; font-size:16px;">تحديد الأصناف والأسعار 📝</h3>
+            <p style="font-size:11px; opacity:0.8;">اكتب الصنف وبجانبه السعر (سيتم الجمع تلقائياً)</p>
+            <textarea id="order-items-input" placeholder="مثال:&#10;باقة ورد 25000&#10;شوكولاتة 15000" oninput="calculateTotal()"></textarea>
+            <div class="total-box">
+                <span style="font-size: 12px; opacity: 0.8;">إجمالي قيمة الطلب:</span><br>
+                <b id="live-total-price" style="font-size: 20px; color: var(--pink);">0</b> <small>ل.س</small>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="completeOrder()" class="btn-login" style="flex:2;">تأكيد وإرسال الفاتورة 🩷</button>
+                <button onclick="document.getElementById('order-details-modal').style.display='none'" style="flex:1; background:var(--glass); color:#fff; border:1px solid #555; border-radius:12px; cursor:pointer;">إلغاء</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-    const fbConfig = { apiKey: "AIzaSyATT9rGsphiw9XjGW-BaE_aVg0O6bGYi14", authDomain: "shahen-f31c2.firebaseapp.com", databaseURL: "https://shahen-f31c2-default-rtdb.firebaseio.com", projectId: "shahen-f31c2", storageBucket: "shahen-f31c2.firebasestorage.app", appId: "1:531429638214:web:11376d90b1d66c37f14a47" };
-    firebase.initializeApp(fbConfig); const db = firebase.database();
-    
-    // نظام الثبات الدائم (LocalStorage)
-    let cart = JSON.parse(localStorage.getItem('sh_cart')) || [], curRid = localStorage.getItem('sh_cur_rid') || null, rInt = null;
+    // ===== الاتصال بقاعدة البيانات — نفس الصيدلية =====
+    const _sb = supabase.createClient('https://ricoslplbhphydhtrufe.supabase.co', 'sb_publishable_k6LgEuwPLdCsBMCFC12wfQ_BSOJotuw');
+    let currentRes = null;
+    let lastCount = 0;
+    let refreshTimer = 0;
+    let activeOrderId = null;
+    let chatChannel = null;
+    let statusChannel = null;
+    let msgIds = new Set();
+    let historyOrders = [];
+    let currentActiveOrders = [];
+    // ===== صوت التنبيه =====
+    const sound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+    // polling احتياطي للرسائل
+    let _msgPollInterval = null;
 
-    function notify(m) { document.getElementById('notify-text').innerText = m; const n = document.getElementById('internal-notify'); n.classList.add('show'); setTimeout(() => n.classList.remove('show'), 3000); }
-    document.getElementById('uName').oninput = (e) => { document.getElementById('p-name-val').innerText = e.target.value || ".........."; };
+    function initAudio() { sound.play().then(() => { sound.pause(); sound.currentTime = 0; }).catch(() => {}); }
 
-    function login() { const n = document.getElementById('uName').value, p = document.getElementById('uPhone').value, c = document.getElementById('pledge-check').checked; if(n && p && c) { localStorage.setItem('sh_active_u', JSON.stringify({name:n, phone:p})); location.reload(); } else { notify("⚠️ أكمل العهد الشرعي أولاً"); } }
-    
-    window.onload = () => {
-        db.ref('sh_restaurants').on('value', (s) => { if(s.val()) { localStorage.setItem('sh_restaurants', JSON.stringify(Object.values(s.val()))); renderPlaces(); } });
-        if(localStorage.getItem('sh_active_u')) { document.getElementById('p-login').classList.remove('active'); document.getElementById('tab-bar').style.display = 'flex'; nav('p-home'); updateBadge(); }
-    };
-
-    function renderPlaces() { const q = document.getElementById('g-search').value.toLowerCase(); const all = JSON.parse(localStorage.getItem('sh_restaurants')) || []; document.getElementById('res-list').innerHTML = all.filter(r => r.name.toLowerCase().includes(q)).map(r => `<div class="card" onclick="openMenu('${r.id}')"><img src="${r.image}"><div><b>${r.name}</b><br><small style="color:var(--gold)">صقر شاهين متاح 🦅</small></div></div>`).join(''); }
-    function openMenu(id) { const res = JSON.parse(localStorage.getItem('sh_restaurants')).find(r => r.id == id); document.getElementById('menu-header').innerHTML = `<i class="fas fa-chevron-right" onclick="nav('p-home')"></i> <b style="font-size:22px;">${res.name}</b>`; document.getElementById('items-list').innerHTML = res.menu.map(m => `<div class="card" style="justify-content:space-between"><div style="display:flex; align-items:center; gap:12px"><img src="${m.img}" style="width:60px; height:60px; border-radius:12px; object-fit:cover;"><div><b>${m.itemName}</b><br><small style="color:var(--gold)">${m.price} ل.س</small></div></div><button class="btn-gold" style="width:auto; padding:8px 15px" onclick="add('${res.id}','${res.name}','${m.itemName}',${m.price},'${m.img}')">أضف</button></div>`).join(''); nav('p-menu'); }
-    
-    function add(rid, rn, n, p, img) { 
-        if(curRid && curRid !== rid) return notify("❌ مطعم واحد فقط في الفاتورة!"); curRid = rid; 
-        cart.push({rn, n, p, img}); localStorage.setItem('sh_cart', JSON.stringify(cart)); localStorage.setItem('sh_cur_rid', rid);
-        notify("✅ تمت الإضافة للفاتورة"); updateBadge();
-    }
-    function updateBadge() { const b = document.getElementById('cart-badge'); b.innerText = cart.length; b.style.display = cart.length>0?'block':'none'; }
-
-    function renderCart() {
-        const c = document.getElementById('cart-content'); if(cart.length === 0) { c.innerHTML = "<p style='text-align:center; opacity:0.3; padding:50px;'>الفاتورة فارغة حالياً..</p>"; return; }
-        c.innerHTML = `<div class="bill-card"><div class="bill-header"><span>${cart[0].rn}</span><i class="fas fa-store"></i></div>` + cart.map((i,idx) => `<div class="bill-item"><img src="${i.img}"><div style="flex:1"><b>${i.n}</b></div><b>${i.p} ل.س</b><i class="fas fa-trash-alt" style="color:var(--danger); margin-right:12px;" onclick="rem(${idx})"></i></div>`).join('') + `</div>`;
-        const sub = cart.reduce((s,i) => s + i.p, 0); document.getElementById('cart-summary').innerHTML = `<div class="bill-summary"><div style="display:flex; justify-content:space-between"><span>رسوم التوصيل:</span><b>10,000 ل.س</b></div><div style="display:flex; justify-content:space-between; color:var(--gold); font-size:20px; font-weight:bold; margin-top:15px; border-top:1px solid #222; padding-top:10px;"><span>الإجمالي النهائي:</span><span>${sub+10000} ل.س</span></div></div><button class="btn-gold" style="margin-top:25px;" onclick="startRadar()">اعتماد الفاتورة 🦅</button>`;
+    function setVSize(type) {
+        const container = document.getElementById('app-container');
+        if(type === 'mobile') { container.style.width = '375px'; container.style.height = '667px'; }
+        else if(type === 'tablet') { container.style.width = '768px'; container.style.height = '1024px'; }
+        else { container.style.width = '100vw'; container.style.height = '100vh'; }
     }
 
-    function rem(idx) { cart.splice(idx,1); if(cart.length===0) { curRid=null; localStorage.removeItem('sh_cur_rid'); } localStorage.setItem('sh_cart', JSON.stringify(cart)); renderCart(); updateBadge(); }
-    function startRadar() { document.getElementById('cancel-radar').style.display = 'flex'; let t = 15; rInt = setInterval(() => { t--; document.getElementById('r-timer').innerText = t; if(t <= 0) finalize(); }, 1000); }
-    function abortOrder() { clearInterval(rInt); document.getElementById('cancel-radar').style.display = 'none'; notify("✖ تم إلغاء الإرسال"); }
-    
-    function finalize() {
-        clearInterval(rInt); const id = Date.now(); const sub = cart.reduce((s,i)=>s+i.p,10000);
-        const o = { id, res: cart[0].rn, total: sub, status: 'نشط 🦅', driver: 'بانتظار القبول' };
-        let h = JSON.parse(localStorage.getItem('sh_h')) || []; h.unshift(o); localStorage.setItem('sh_h', JSON.stringify(h));
-        db.ref('sh_public_orders/'+id).set({...o, customer: JSON.parse(localStorage.getItem('sh_active_u')).name});
-        cart = []; curRid = null; localStorage.removeItem('sh_cart'); localStorage.removeItem('sh_cur_rid');
-        document.getElementById('cancel-radar').style.display = 'none'; nav('p-history'); notify("🚀 صقر شاهين انطلق إليك");
+    // ===== تسجيل الدخول: يجلب من جدول restaurants بنفس حقل access_code =====
+    async function checkAuth() {
+        const email = document.getElementById('login-email').value.trim();
+        const code = document.getElementById('login-code').value.trim();
+        if(!email || !code) { alert('يرجى إدخال البريد وكود التفعيل'); return; }
+        // البحث في جدول المتاجر (نفس جدول المطاعم لكن مع فلتر الشريك الخارجي)
+        const { data } = await _sb.from('restaurants').select('*').eq('email', email).eq('access_code', code).single();
+        if (data) {
+            currentRes = data;
+            localStorage.setItem('sh_store_session', JSON.stringify(data));
+            startApp();
+        } else {
+            alert('بيانات الدخول غير صحيحة');
+        }
     }
 
-    function renderHistory() {
-        const all = JSON.parse(localStorage.getItem('sh_h')) || [];
-        document.getElementById('active-orders').innerHTML = all.filter(o => o.status === 'نشط 🦅').map(o => `<div class="card" style="flex-direction:column; align-items:flex-start;"><b>${o.res}</b><small>المندوب المسؤول: ${o.driver}</small><button class="btn-gold" style="margin-top:10px; font-size:12px; height:40px;" onclick="openC('${o.id}','${o.driver}')">تقديم شكوى</button></div>`).join('');
-        document.getElementById('past-orders').innerHTML = all.filter(o => o.status !== 'نشط 🦅').map(o => `<div class="card" style="opacity:0.5"><b>${o.res}</b><br><small>${o.total} ل.س</small></div>`).join('');
+    function startApp() {
+        const session = localStorage.getItem('sh_store_session');
+        if (session) currentRes = JSON.parse(session);
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('main-content').style.display = 'flex';
+        document.getElementById('display-res-name').innerText = currentRes.name || 'المتجر';
+        // عرض نوع المتجر
+        const storeTypeMap = { flowers: '🌸 متجر ورود', sweets: '🍬 متجر حلويات', gifts: '🎁 متجر هدايا' };
+        const stTypeDisplay = storeTypeMap[currentRes.specialty_type] || '🛍️ متجر';
+        document.getElementById('display-store-type').innerText = stTypeDisplay;
+        loadOrders(true);
+        loadHistory();
+        setInterval(() => {
+            refreshTimer += 33.4;
+            document.getElementById('sync-bar').style.width = refreshTimer + '%';
+            if (refreshTimer >= 100) { refreshTimer = 0; loadOrders(); loadHistory(); }
+        }, 1000);
     }
 
-    function openC(id, d) { document.getElementById('modal-overlay').style.display = 'flex'; document.getElementById('modal-title').innerText = "تقديم بلاغ"; document.getElementById('modal-content').innerHTML = `<p style="font-size:12px; color:#888;">المندوب المعني: ${d}</p><textarea id="c-text" style="width:100%; height:150px; background:#111; border:1px solid #333; color:#fff; border-radius:15px; padding:15px;" placeholder="اكتب تفاصيل الشكوى للقائد يحيى.."></textarea><button class="btn-gold" style="margin-top:20px;" onclick="sendC('${id}','${d}')">إرسال البلاغ</button>`; }
-    function sendC(id, d) { const t = document.getElementById('c-text').value; if(t) { db.ref('sh_complaints/'+id).set({t, d, u: JSON.parse(localStorage.getItem('sh_active_u')).name, time: Date.now()}); closeModal(); notify("✅ تم إرسال البلاغ للإدارة"); } }
-    function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
-    function nav(id) { document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id==='p-home') renderPlaces(); if(id==='p-cart') renderCart(); if(id==='p-history') renderHistory(); }
+    async function loadHistory() {
+        if(!currentRes) return;
+        const today = new Date(); today.setHours(0,0,0,0);
+        // ===== المشكلة الثانية: بعد الفاتورة يصبح store_invoice_sent ثم تنتهي عند المتجر =====
+        const { data: all } = await _sb.from('sh_public_orders').select('*')
+            .eq('restaurant_name', currentRes.name)
+            .in('status', ['store_invoice_sent', 'completed', 'cancelled']);
+        if(all) {
+            historyOrders = all;
+            const d = all.filter(o => new Date(o.created_at) >= today);
+            const calcProfit = (list) => list.reduce((sum, o) => sum + (Number(o.order_price) || 0), 0);
+            document.getElementById('today-profit').innerText = calcProfit(d).toLocaleString();
+            document.getElementById('report-day').innerText = d.length;
+            document.getElementById('p-day').innerText = calcProfit(d).toLocaleString();
+        }
+    }
+
+    async function loadOrders(isFirst = false) {
+        if (!currentRes) return;
+        // جلب الطلبات النشطة للمتجر (res_type = specialty)
+        const { data: orders } = await _sb.from('sh_public_orders').select('*')
+            .eq('res_type', 'specialty')
+            .in('status', ['searching', 'consulting', 'accepted'])
+            .order('created_at', { ascending: false });
+
+        // فلترة طلبات هذا المتجر تحديداً
+        currentActiveOrders = (orders || []).filter(o =>
+            o.restaurant_name === currentRes.name || Number(o.restaurant_id) === Number(currentRes.id)
+        );
+
+        if (!isFirst && currentActiveOrders.length > lastCount) {
+            sound.play().catch(() => {});
+            showToast('طلب جديد 🛍️');
+        }
+        lastCount = currentActiveOrders.length;
+        document.getElementById('stat-count').innerText = currentActiveOrders.length;
+        renderOrders(currentActiveOrders);
+    }
+
+    function renderOrders(orders) {
+        const list = document.getElementById('orders-list');
+        if (orders.length === 0) {
+            list.innerHTML = `<div class="empty-state"><i class="fas fa-check-circle" style="color:var(--pink);"></i><p>الواجهة صافية.. لا توجد طلبات نشطة</p></div>`;
+            return;
+        }
+        list.innerHTML = orders.map(o => `
+            <div class="order-card ${o.status === 'consulting' || o.status === 'accepted' ? 'status-active' : 'status-new'}" id="card-${o.id}">
+                <div style="font-size:9px; opacity:0.6; color:var(--pink);">#${String(o.id).slice(-4)}</div>
+                <div style="font-weight:bold; font-size:13px; margin:5px 0;">${o.customer_name || 'عميل'}</div>
+                <div style="font-size:10px; opacity:0.7; margin-bottom:5px;">${o.specialty_type === 'flowers' ? '🌸 ورود' : o.specialty_type === 'sweets' ? '🍬 حلويات' : o.specialty_type === 'gifts' ? '🎁 هدايا' : '🛍️ طلب'}</div>
+                <button class="btn-act ${o.status === 'consulting' || o.status === 'accepted' ? 'btn-follow' : 'btn-accept'}" onclick="openChat('${o.id}')">
+                    ${o.status === 'consulting' || o.status === 'accepted' ? '🩷 متابعة الطلب' : '✅ قبول الطلب'}
+                </button>
+            </div>
+        `).join('');
+    }
+
+    async function openChat(orderId) {
+        // تحديد نوع المعرف تلقائياً
+        activeOrderId = isNaN(orderId) ? String(orderId) : Number(orderId);
+        msgIds.clear();
+        // تحديث الحالة إلى accepted
+        await _sb.from('sh_public_orders').update({
+            status: 'accepted',
+            restaurant_id: currentRes.id,
+            restaurant_name: currentRes.name
+        }).eq('id', activeOrderId);
+
+        document.getElementById('active-chat-box').style.display = 'flex';
+        document.getElementById('chat-flow').innerHTML = '';
+
+        // مستمع لتغيير الحالة
+        if (statusChannel) _sb.removeChannel(statusChannel);
+        statusChannel = _sb.channel('st_store_' + activeOrderId)
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'sh_public_orders', filter: `id=eq.${activeOrderId}` }, p => {
+                if (p.new.status === 'store_invoice_sent' || p.new.status === 'cancelled') {
+                    closeChat();
+                }
+            }).subscribe();
+
+        // جلب بيانات الطلب
+        const { data: order } = await _sb.from('sh_public_orders').select('*').eq('id', activeOrderId).single();
+        document.getElementById('client-name-chat').innerText = order?.customer_name || 'عميل شاهين';
+        document.getElementById('active-order-id').innerText = '#' + activeOrderId + (order?.specialty_type ? ' | ' + (order.specialty_type === 'flowers' ? '🌸' : order.specialty_type === 'sweets' ? '🍬' : '🎁') : '');
+
+        // تحميل الرسائل السابقة
+        const { data: msgs } = await _sb.from('sh_messages').select('*').eq('order_id', activeOrderId).order('created_at', { ascending: true });
+        if (msgs) msgs.forEach(m => { msgIds.add(m.id); addMsgToUI(m.message, m.sender); });
+        scrollChat();
+
+        // ===== إصلاح المشكلة الأولى: Realtime channel لاستقبال الرسائل فوراً =====
+        if (chatChannel) _sb.removeChannel(chatChannel);
+        chatChannel = _sb.channel('ch_store_msgs_' + activeOrderId)
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sh_messages' }, p => {
+                const m = p.new;
+                if (String(m.order_id) !== String(activeOrderId)) return;
+                if (msgIds.has(m.id)) return;
+                msgIds.add(m.id);
+                addMsgToUI(m.message, m.sender);
+                if (m.sender === 'client') { sound.play().catch(() => {}); showToast('رسالة جديدة من العميل 💬'); }
+                scrollChat();
+            })
+            .subscribe((status) => {
+                console.log('[SHAHEN STORE] channel status:', status);
+            });
+
+        // ===== polling احتياطي كل 3 ثواني لضمان وصول الرسائل =====
+        if (_msgPollInterval) clearInterval(_msgPollInterval);
+        _msgPollInterval = setInterval(async () => {
+            if (!activeOrderId) { clearInterval(_msgPollInterval); return; }
+            const { data: newMsgs } = await _sb.from('sh_messages').select('*').eq('order_id', activeOrderId).order('created_at', { ascending: true });
+            if (newMsgs) {
+                newMsgs.forEach(m => {
+                    if (msgIds.has(m.id)) return;
+                    msgIds.add(m.id);
+                    addMsgToUI(m.message, m.sender);
+                    if (m.sender === 'client') { sound.play().catch(() => {}); showToast('رسالة جديدة من العميل 💬'); }
+                });
+                scrollChat();
+            }
+        }, 3000);
+    }
+
+    // ===== إصلاح المشكلة الأولى: إرسال الرسائل يعمل بشكل كامل =====
+    async function sendMsg() {
+        const inp = document.getElementById('chat-input');
+        const text = inp.value.trim();
+        if (!text || !activeOrderId) return;
+        inp.value = '';
+        // إضافة الرسالة للواجهة فوراً
+        addMsgToUI(text, 'store');
+        scrollChat();
+        // حفظ الرسالة في قاعدة البيانات
+        const { data: saved, error: msgErr } = await _sb.from('sh_messages').insert({
+            order_id: activeOrderId,
+            sender: 'store',
+            message: text
+        }).select().single();
+        if (msgErr) {
+            console.error('[SHAHEN STORE sendMsg] فشل إرسال الرسالة:', msgErr);
+            showToast('فشل إرسال الرسالة ❌');
+        }
+        if (saved) msgIds.add(saved.id);
+    }
+
+    function addMsgToUI(text, sender) {
+        const flow = document.getElementById('chat-flow');
+        const wrap = document.createElement('div');
+        wrap.className = `msg ${sender === 'store' ? 'store' : 'client'}`;
+        wrap.style.alignSelf = sender === 'store' ? 'flex-end' : 'flex-start';
+        wrap.innerText = text;
+        flow.appendChild(wrap);
+    }
+
+    function scrollChat() { const flow = document.getElementById('chat-flow'); flow.scrollTop = flow.scrollHeight; }
+
+    function showDetailsBox() {
+        document.getElementById('order-items-input').value = '';
+        document.getElementById('live-total-price').innerText = '0';
+        document.getElementById('order-details-modal').style.display = 'flex';
+    }
+
+    function calculateTotal() {
+        const text = document.getElementById('order-items-input').value;
+        const numbers = text.match(/\d+/g);
+        const total = numbers ? numbers.reduce((sum, num) => sum + parseInt(num), 0) : 0;
+        document.getElementById('live-total-price').innerText = total.toLocaleString();
+        return total;
+    }
+
+    // ===== إصلاح المشكلة الثانية: بعد الفاتورة يُحذف الطلب من النشطة وينتقل للأرشيف =====
+    async function completeOrder() {
+        const details = document.getElementById('order-items-input').value.trim();
+        const totalPrice = calculateTotal();
+        if (!details || totalPrice === 0) { alert('يرجى كتابة الأصناف وأسعارها بشكل صحيح'); return; }
+
+        const targetId = activeOrderId;
+        const finalInvoice = `🛍️ فاتورة متجر ${currentRes.name}:\n------------------\n${details}\n------------------\n💰 الإجمالي النهائي: ${totalPrice.toLocaleString()} ل.س`;
+
+        // ===== تغيير الحالة إلى store_invoice_sent: ينهي الطلب عند المتجر ويُمكّن العميل من إرساله للمندوب =====
+        const { error } = await _sb.from('sh_public_orders').update({
+            status: 'store_invoice_sent',
+            order_details: finalInvoice,
+            order_price: totalPrice
+        }).eq('id', targetId);
+
+        if(!error) {
+            // إرسال الفاتورة كرسالة في المحادثة
+            await _sb.from('sh_messages').insert({ order_id: targetId, sender: 'store', message: finalInvoice });
+            // ===== إزالة الطلب من النشطة فوراً =====
+            currentActiveOrders = currentActiveOrders.filter(o => String(o.id) !== String(targetId));
+            renderOrders(currentActiveOrders);
+            document.getElementById('order-details-modal').style.display = 'none';
+            showToast('تم إرسال الفاتورة بنجاح ✅');
+            // ===== إغلاق الدردشة وانتهاء الطلب عند المتجر =====
+            closeChat();
+            // تحديث الأرشيف
+            loadHistory();
+        } else {
+            alert('خطأ: ' + error.message);
+        }
+    }
+
+    async function cancelDueToNoResponse() {
+        if (!activeOrderId) return;
+        if (!confirm('هل أنت متأكد من إلغاء الطلب بسبب عدم رد العميل؟')) return;
+        const targetId = activeOrderId;
+        const { error } = await _sb.from('sh_public_orders').update({
+            status: 'cancelled',
+            order_details: 'تم الإلغاء لعدم رد العميل'
+        }).eq('id', targetId);
+        if (!error) {
+            showToast('تم إلغاء الطلب ⏳');
+            closeChat();
+        } else {
+            alert('خطأ أثناء الإلغاء: ' + error.message);
+        }
+    }
+
+    function closeChat() {
+        if (chatChannel) _sb.removeChannel(chatChannel);
+        if (statusChannel) _sb.removeChannel(statusChannel);
+        // إيقاف الـ polling
+        if (_msgPollInterval) { clearInterval(_msgPollInterval); _msgPollInterval = null; }
+        document.getElementById('active-chat-box').style.display = 'none';
+        activeOrderId = null;
+        loadOrders();
+        loadHistory();
+    }
+
+    function openReportModal(period) {
+        const container = document.getElementById('report-items-container');
+        container.innerHTML = historyOrders.map(o => `
+            <div class="report-item" style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 10px; margin-bottom: 10px; border-right: 3px solid var(--pink);">
+                <b>${o.customer_name}</b><br>
+                <small>#${o.id} | ${new Date(o.created_at).toLocaleString('ar-SY')}</small>
+                <div style="font-size:10px; color:var(--pink); white-space:pre-line; margin-top:5px;">${o.order_details || ''}</div>
+                <div style="font-size:11px; margin-top:4px;">💰 ${(o.order_price || 0).toLocaleString()} ل.س</div>
+            </div>
+        `).join('') || '<p style="text-align:center;">لا توجد بيانات</p>';
+        document.getElementById('report-modal').style.display = 'flex';
+    }
+
+    function closeReportModal() { document.getElementById('report-modal').style.display = 'none'; }
+    function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3000); }
+    function logout() { localStorage.removeItem('sh_store_session'); location.reload(); }
+
+    window.onload = () => { if (localStorage.getItem('sh_store_session')) startApp(); };
 </script>
 </body>
 </html>
