@@ -7774,7 +7774,11 @@
             _tMap.on('zoomstart', (e) => { if (e.originalEvent) { _tFollowMode = false; _tUserInteracted = true; _updateRecenterBtnVisibility(); } });
 
             function _setupLayers() {
-                _applyArabicLabels(_tMap);
+                // [FIX-LABELS-MISSING] تم تعطيل استبدال نص التسميات مؤقتاً — كان يستبدل تعبير النص الأصلي
+                // لكل طبقات الرموز بافتراض وجود name_ar/name_en في جميعها، وهذا غير صحيح لكل الطبقات
+                // (تسميات الشوارع تحديداً تستخدم بنية مختلفة)، فكان يُسبب اختفاء التسميات بالكامل أحياناً.
+                // النمط الافتراضي dark-v11 يعرض التسميات بشكل موثوق دون أي تعديل.
+                // _applyArabicLabels(_tMap);
                 _registerMapIcons(_tMap);
 
                 if (!_tMap.getSource('track-route')) {
