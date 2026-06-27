@@ -1167,11 +1167,6 @@
             </div>
             <i class="fas fa-phone-alt" id="call-driver-btn" style="color:var(--gold); font-size: 18px; cursor: pointer;"></i>
         </div>
-        <!-- ===== خريطة تتبع المندوب الحي للعميل ===== -->
-        <button id="open-track-driver-btn" class="btn-gold" style="display:none; margin-bottom:8px; background:linear-gradient(135deg, var(--gold), #b8932e); color:#1a051a; font-weight:bold;" onclick="openDriverTrackingPage()">
-            <i class="fas fa-location-arrow"></i> تتبع المندوب 📍
-        </button>
-        <!-- ===== نهاية خريطة التتبع ===== -->
 
         <!-- [PROGRESS-TRACKER] شريط مراحل الطلب الاحترافي — يعتمد على حالة الطلب الفعلية من قاعدة البيانات -->
         <div id="order-progress-tracker">
@@ -1210,6 +1205,12 @@
             <div id="order-status-list" style="display:flex; flex-direction:column; gap:4px;"></div>
         </div>
 
+        <!-- [FIX-CHAT-ETA] الوقت المتبقي للمندوب — يعمل سواء كان متجهاً للمطعم أو للعميل -->
+        <div id="chat-eta-widget" style="display:none; background:rgba(212,175,55,0.08); border:1px solid var(--gold); border-radius:12px; padding:10px; margin-bottom:8px; text-align:center;">
+            <div id="chat-eta-label" style="font-size:11px; color:#ccc; margin-bottom:4px;">⏱ الوقت المتبقي للمندوب</div>
+            <b id="chat-eta-value" style="font-size:20px; color:var(--gold);">-- دقيقة</b>
+        </div>
+
         <div id="client-code-notice" style="display:block; background:rgba(212,175,55,0.1); padding:10px; border-radius:12px; margin-top:18vh; border:1px dashed var(--gold); text-align:center;">
             <p style="font-size:11px; color:var(--gold); margin:0 0 6px 0;">كود التحقق الخاص بك 🔑 (لا تغلق الطلب إلا بعد تسليمه):</p>
             <b id="reveal-order-code" style="font-size:24px; color:#fff; letter-spacing:6px; display:block; margin-bottom:8px;">----</b>
@@ -1218,6 +1219,11 @@
                 <i class="fab fa-whatsapp"></i> تواصل مع الصقر
             </button>
         </div>
+        <!-- ===== خريطة تتبع المندوب الحي للعميل — نُقل هنا ليكون بارزاً وواضحاً دائماً ===== -->
+        <button id="open-track-driver-btn" class="btn-gold" style="display:none; margin-top:8px; background:linear-gradient(135deg, var(--gold), #b8932e); color:#1a051a; font-weight:bold;" onclick="openDriverTrackingPage()">
+            <i class="fas fa-location-arrow"></i> تتبع المندوب 📍
+        </button>
+        <!-- ===== نهاية خريطة التتبع ===== -->
 
         <div id="chat-box" style="flex:1; display:flex; flex-direction:column; overflow-y:auto; padding:8px; background: rgba(0,0,0,0.1); border-radius: 12px; position: relative;">
         </div>
@@ -1238,8 +1244,6 @@
             </div>
         </div>
         <div style="display:none; gap:8px; margin-top:8px; align-items: center; background: var(--purple); padding: 10px; border-top: 1px solid var(--gold);" id="chat-input-area">
-            <input type="file" id="chat-file-input" accept="image/*" style="display:none;" onchange="uploadChatImg(this)">
-            <i class="fas fa-camera" style="color:var(--gold); font-size:20px; cursor:pointer; padding:5px;" onclick="document.getElementById('chat-file-input').click()"></i>
             <input type="text" id="m-inp" placeholder="اكتب رسالة..." style="margin:0; font-size: 12px; flex: 1;">
             <button class="btn-gold" style="width:auto; padding:0 15px;" onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
         </div>
@@ -4451,7 +4455,8 @@
         // Polling احتياطي كل 3 ثواني
         if (_spPollInterval) clearInterval(_spPollInterval);
         _spPollInterval = setInterval(async () => {
-            if (!_spChatOrderId) { clearInterval(_spPollInterval); return; }
+            // [FIX-ORDER-MIX] نفس الإصلاح لدردشة المحلات التخصصية
+            if (!_spChatOrderId || String(_spChatOrderId) !== String(orderId)) { clearInterval(_spPollInterval); return; }
             const { data: newMsgsRaw } = await _supabase.from('sh_messages')
                 .select('*').eq('order_id', orderId).order('created_at', { ascending: true });
             const newMsgs = _stripStatusMsgs(newMsgsRaw);
@@ -5015,7 +5020,8 @@
     function _startSearchPoll(orderId) {
         if (_searchPollInterval) clearInterval(_searchPollInterval);
         _searchPollInterval = setInterval(async () => {
-            if (!currentOrderKey) { clearInterval(_searchPollInterval); _searchPollInterval = null; return; }
+            // [FIX-ORDER-MIX] نفس الإصلاح — لا نُطبّق نتيجة استطلاع طلب على شاشة طلب آخر مختلف حالياً
+            if (!currentOrderKey || String(currentOrderKey) !== String(orderId)) { clearInterval(_searchPollInterval); _searchPollInterval = null; return; }
             const { data: _pollOrd } = await _supabase.from('sh_public_orders')
                 .select('status, driver_name, driver_phone').eq('id', orderId).maybeSingle();
             if (!_pollOrd) return;
@@ -5366,7 +5372,8 @@
         if (_clientMsgPollInterval) clearInterval(_clientMsgPollInterval);
         const _pollOrderId = order.id;
         _clientMsgPollInterval = setInterval(async () => {
-            if (!currentOrderKey) { clearInterval(_clientMsgPollInterval); return; }
+            // [FIX-ORDER-MIX] نفس الإصلاح لدردشة استشارة الصيدلية
+            if (!currentOrderKey || String(currentOrderKey) !== String(_pollOrderId)) { clearInterval(_clientMsgPollInterval); return; }
             const { data: pollMsgsRaw1 } = await _supabase.from('sh_messages').select('*').eq('order_id', _pollOrderId).order('created_at', { ascending: true });
             const pollMsgs = _stripStatusMsgs(pollMsgsRaw1);
             if (pollMsgs) {
@@ -6454,10 +6461,86 @@
         document.body.appendChild(modal);
     }
 
+    // [FIX-RELIABLE-TRACK-BTN] نسخة مستقلة وبسيطة من دالة إظهار/إخفاء زر التتبع، معرَّفة هنا مباشرة
+    // (لا داخل نظام Mapbox المعقّد) — حتى لو فشل أي جزء من تهيئة الخريطة بصمت لأي سبب، يبقى الزر
+    // يظهر بشكل صحيح دائماً بناءً على توفر مندوب للطلب، بشكل مستقل تماماً عن ذلك النظام
+    if (typeof window._refreshTrackButton !== 'function') {
+        window._refreshTrackButton = function(order) {
+            const btn = document.getElementById('open-track-driver-btn');
+            if (!btn) return;
+            const canTrack = order && order.driver_id && ['accepted', 'preparing', 'ready'].includes(order.status);
+            btn.style.display = canTrack ? 'block' : 'none';
+            window._lastTrackableOrder = canTrack ? order : null;
+        };
+    }
+
+    // [FIX-CHAT-ETA] حساب تقريبي للمسافة بين نقطتين (كم) لاستخدامه في تقدير الوقت المتبقي
+    function _haversineKmChat(lat1, lng1, lat2, lng2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+    // [FIX-CHAT-ETA] تحديث الوقت المتبقي للمندوب في صفحة الدردشة — يعمل سواء كان متجهاً للمطعم أو للعميل،
+    // بشكل مستقل تماماً عن صفحة التتبع الكاملة بالخريطة (لا حاجة لفتحها لمعرفة الوقت التقريبي المتبقي)
+    async function _updateChatEtaWidget() {
+        const widget = document.getElementById('chat-eta-widget');
+        if (!widget) return;
+        if (!currentOrderKey) { widget.style.display = 'none'; return; }
+        try {
+            const { data: ord } = await _supabase.from('sh_public_orders')
+                .select('driver_id,driver_stage,status,restaurant_id,pickup_lat,pickup_lng,lat,lng,customer_id,res_type')
+                .eq('id', currentOrderKey).maybeSingle();
+            if (!ord || !ord.driver_id || !['accepted', 'preparing', 'ready'].includes(ord.status)) {
+                widget.style.display = 'none'; return;
+            }
+            const { data: pos } = await _supabase.from('sh_admin_tracking').select('lat,lng').eq('id', ord.driver_id).maybeSingle();
+            if (!pos || !pos.lat || !pos.lng) { widget.style.display = 'none'; return; }
+
+            let destLat = null, destLng = null, label = '';
+            const stage = ord.driver_stage;
+            if (stage === 'to_customer' || stage === 'arrived') {
+                destLat = parseFloat(ord.lat); destLng = parseFloat(ord.lng);
+                if (!destLat || !destLng) {
+                    try {
+                        const { data: cust } = await _supabase.from('customers').select('lat,lng').eq('id', ord.customer_id).maybeSingle();
+                        if (cust && cust.lat && cust.lng) { destLat = parseFloat(cust.lat); destLng = parseFloat(cust.lng); }
+                    } catch(e) {}
+                }
+                label = '⏱ الوقت المتبقي حتى يصلك المندوب 🏠';
+            } else {
+                destLat = parseFloat(ord.pickup_lat); destLng = parseFloat(ord.pickup_lng);
+                label = '⏱ الوقت المتبقي لوصول المندوب للمطعم 🏪';
+            }
+            if (!destLat || !destLng) { widget.style.display = 'none'; return; }
+
+            const distKm = _haversineKmChat(parseFloat(pos.lat), parseFloat(pos.lng), destLat, destLng);
+            // تقدير بمتوسط سرعة 28 كم/سا (مناسب للتوصيل داخل المدينة) — تقدير تقريبي وليس مساراً دقيقاً
+            const etaMin = Math.max(1, Math.round((distKm / 28) * 60));
+            const distLabel = distKm < 1 ? Math.round(distKm * 1000) + ' م' : distKm.toFixed(1) + ' كم';
+            document.getElementById('chat-eta-label').innerText = label;
+            document.getElementById('chat-eta-value').innerText = `${etaMin} دقيقة تقريباً (${distLabel})`;
+            widget.style.display = 'block';
+        } catch(e) {
+            widget.style.display = 'none';
+        }
+    }
+    // استطلاع دوري لتحديث الوقت المتبقي كل 15 ثانية + تشغيل فوري عند تحميل الصفحة
+    if (window._chatEtaInterval) clearInterval(window._chatEtaInterval);
+    window._chatEtaInterval = setInterval(_updateChatEtaWidget, 15000);
+
     async function checkOrderAction(id, status) {
         // جلب الحالة الحقيقية من السيرفر عند الضغط على الطلب
         const { data: serverOrder } = await _supabase.from('sh_public_orders').select('*').eq('id', id).single();
-        
+
+        // [FIX-EARLIEST-TRACK-BTN] تحديث زر التتبع هنا فوراً، أول شيء بعد جلب الطلب، بمعزل تام (try/catch
+        // خاص به) عن أي كود لاحق قد يرمي استثناءً صامتاً ويوقف باقي الدالة قبل الوصول لتحديث الزر
+        try {
+            if (typeof window._refreshTrackButton === 'function') window._refreshTrackButton(serverOrder);
+        } catch(e) { console.error('refreshTrackButton early-call error:', e); }
+        try { _updateChatEtaWidget(); } catch(e) {}
+
         if(!serverOrder) {
             // الطلب غير موجود في السيرفر — عرض بياناته من السجل المحلي
             const localOrders = getStorage('orders');
@@ -6518,28 +6601,28 @@
             const _isDuplicateState = !!(_chatBoxEl && _chatBoxEl.getAttribute('data-rendered-for') === _stateKey);
             _lastCheckedOrderState = _stateKey;
             nav('p-chat');
-            if (_isDuplicateState) return;
-            if (_chatBoxEl) _chatBoxEl.setAttribute('data-rendered-for', _stateKey);
 
+            // [FIX-LIGHTWEIGHT-ALWAYS] هذه التحديثات خفيفة وغير مكلفة (لا تتطلب جلب بيانات جديدة أو
+            // إعادة بناء HTML ثقيل) — تُنفَّذ دائماً بدون أي شرط، لضمان عدم اختفاء زر التتبع أو رابط
+            // الواتساب أو الكود أبداً بسبب فحص التكرار المخصَّص فقط لمنع إعادة بناء صندوق الدردشة الثقيل
             const driverName = serverOrder.driver_name || "صقر الشاهين 🦅";
             document.getElementById('driver-chat-name').innerText = driverName;
             document.getElementById('driver-chat-phone').innerText = driverWA;
-            // [CUSTOMER-QUICK-MSG] رسالة جاهزة تلقائية من العميل للمندوب: الاسم + المطعم + رقم الطلب
             const _custNameForDriverMsg = (currentUser && currentUser.name) || serverOrder.customer_name || 'العميل';
             const _resNameForDriverMsg = serverOrder.restaurant_name || 'المطعم';
             const _orderIdForDriverMsg = String(serverOrder.id || id).substring(0,8);
             const _custQuickMsg = encodeURIComponent(`مرحباً يا صقر شاهين، أنا ${_custNameForDriverMsg} أتواصل معك بخصوص طلب من مطعم ${_resNameForDriverMsg} — رقم الطلب: ${_orderIdForDriverMsg}.`);
             document.getElementById('call-driver-btn').onclick = () => window.open(`https://wa.me/${driverWA}?text=${_custQuickMsg}`);
-            // [FIX-RELIABLE-WA] حفظ الرابط في متغيّر عام يستخدمه الزر الثابت أسفل الشاشة — يعمل دائماً
-            // بغض النظر عن أي مشكلة محتملة في إعادة بناء محتوى صندوق الدردشة نفسه
             window._persistentWaLink = `https://wa.me/${driverWA}?text=${_custQuickMsg}`;
-            // [FIX-NAV-STUCK] التنقّل الفعلي صار أعلى الدالة (قبل فحص التكرار) — لم تعد هذه الاستدعاءة ضرورية
             document.getElementById('chat-input-area').style.display = 'flex';
-            // ===== إصلاح 3: كود التحقق يبقى ظاهراً دائماً حتى إغلاق الطلب =====
             document.getElementById('client-code-notice').style.display = 'block';
             document.getElementById('reveal-order-code').innerText = verificationCode || '----';
             // [MAPBOX-TRACK] إظهار/إخفاء زر تتبع المندوب حسب توفر مندوب للطلب
             if (typeof window._refreshTrackButton === 'function') window._refreshTrackButton(serverOrder);
+
+            if (_isDuplicateState) return;
+            if (_chatBoxEl) _chatBoxEl.setAttribute('data-rendered-for', _stateKey);
+
             // إخفاء منطقة تنبيه المطعم لطلبات الصيدلية (الفاتورة تظهر في بطاقة مستقلة أدناه)
             // الأولوية لـ order_type الثابت في قاعدة البيانات
             const _isPharmacyNotif = serverOrder.order_type === 'pharmacy' || serverOrder.res_type === 'pharmacy_delivery' || serverOrder.res_type === 'pharmacy';
@@ -6724,7 +6807,8 @@
             if (_clientMsgPollInterval) clearInterval(_clientMsgPollInterval);
             const _driverPollId = id;
             _clientMsgPollInterval = setInterval(async () => {
-                if (!currentOrderKey) { clearInterval(_clientMsgPollInterval); return; }
+                // [FIX-ORDER-MIX] نفس الإصلاح — لا نطبّق رسائل طلب قديم على شاشة طلب مختلف معروض حالياً
+                if (!currentOrderKey || String(currentOrderKey) !== String(_driverPollId)) { clearInterval(_clientMsgPollInterval); return; }
                 const { data: pollMsgsRaw2 } = await _supabase.from('sh_messages').select('*').eq('order_id', _driverPollId).order('created_at', { ascending: true });
                 const pollMsgs = _stripStatusMsgs(pollMsgsRaw2);
                 if (pollMsgs) {
@@ -6748,7 +6832,9 @@
             if (window._progressPollInterval) clearInterval(window._progressPollInterval);
             const _progressPollId = id;
             window._progressPollInterval = setInterval(async () => {
-                if (!currentOrderKey) { clearInterval(window._progressPollInterval); return; }
+                // [FIX-ORDER-MIX] لا نطبّق أي تحديث إن تغيّر الطلب المعروض حالياً لطلب آخر — يمنع تسرّب
+                // بيانات طلب سابق إلى شاشة طلب جديد لو لم تُنظَّف المؤقّتات القديمة لأي سبب
+                if (!currentOrderKey || String(currentOrderKey) !== String(_progressPollId)) { clearInterval(window._progressPollInterval); return; }
                 try {
                     const { data: freshOrd } = await _supabase.from('sh_public_orders')
                         .select('status,driver_stage,driver_name').eq('id', _progressPollId).maybeSingle();
