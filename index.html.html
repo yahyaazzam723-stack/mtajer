@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="6viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <!-- [SEC-PATCH-15] رؤوس أمان إضافية -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta name="referrer" content="no-referrer">
@@ -1525,6 +1525,29 @@
     const SB_KEY = "sb_publishable_k6LgEuwPLdCsBMCFC12wfQ_BSOJotuw";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
+    // ============================================================
+    // [CHANNEL-MANAGER] إدارة موحدة للقنوات المُسمّاة الثابتة (مثل إشعارات custom-filter-channel)
+    // -------------------------------------------------------------------------
+    // نفس الخلل الموجود في تطبيق المندوب: _supabase.channel(name) يُنشئ كائناً
+    // جديداً كل مرة، فكان فحص "هل القناة ميتة؟" بإنشاء قناة فاضية جديدة وقراءة
+    // .state منها يُعطي 'closed' دائماً (لأنها لم تُشترك بعد) — فكان الـ Watchdog
+    // (كل 20 ثانية) + focus + visibilitychange كلها تستدعي initRealtimeNotifications()
+    // من جديد بشكل متكرر ودائم، تاركة قنوات إشعارات قديمة فعلية تتراكم في الخلفية.
+    // الحل: سجل مرجعي واحد للقنوات المسمّاة الثابتة، يُحدَّث فقط عند إنشاء حقيقي.
+    // ============================================================
+    window._activeChannels = window._activeChannels || {};
+    function _teardownNamedChannel(name) {
+        const ch = window._activeChannels[name];
+        if (ch) {
+            try { _supabase.removeChannel(ch); } catch(_e) {}
+            delete window._activeChannels[name];
+        }
+    }
+    function _isNamedChannelHealthy(name) {
+        const ch = window._activeChannels[name];
+        return !!(ch && ch.state === 'joined');
+    }
+
     // ════════════════════════════════════════════════════
     //  [CURRENCY-SYS] نظام دعم العملة السورية (قديمة/جديدة)
     //  مطابق تماماً لنفس النظام في لوحة الإدارة وتطبيق المندوب
@@ -2642,15 +2665,12 @@
 
     function initRealtimeNotifications() {
         if(!currentUser) return;
-        // [CANCEL-FIX] تنظيف القناة القديمة قبل إنشاء جديدة لمنع التكديس عند إعادة الاستدعاء
-        try {
-            const _oldNotifCh = _supabase.channel('custom-filter-channel');
-            if (_oldNotifCh) _supabase.removeChannel(_oldNotifCh);
-        } catch(_e) {}
+        // [CANCEL-FIX] تنظيف القناة القديمة فعلياً (عبر السجل الموحّد) قبل إنشاء جديدة
+        _teardownNamedChannel('custom-filter-channel');
         // [NOTIF-FIX] انتظر قصير قبل إنشاء القناة الجديدة لضمان إتمام التنظيف الكامل
         setTimeout(function() {
             try {
-                _supabase.channel('custom-filter-channel')
+                window._activeChannels['custom-filter-channel'] = _supabase.channel('custom-filter-channel')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${currentUser.uid}` }, payload => {
                     fetchAdminMessages();
                 }).subscribe((status) => {
@@ -8492,9 +8512,7 @@
         if (!currentUser) return;
         // [CANCEL-FIX] فحص قناة الإشعارات دائماً — حتى بعد إلغاء الطلب أو بدون طلب نشط
         try {
-            const _notifChCheck = _supabase.channel('custom-filter-channel');
-            if (!_notifChCheck || _notifChCheck.state === 'errored' || _notifChCheck.state === 'closed' || _notifChCheck.state === 'leaving') {
-                try { if (_notifChCheck) _supabase.removeChannel(_notifChCheck); } catch(_e2) {}
+            if (!_isNamedChannelHealthy('custom-filter-channel')) {
                 initRealtimeNotifications();
             }
         } catch(_ne) {
@@ -8551,9 +8569,7 @@
         setTimeout(function() {
             // [CANCEL-FIX] أعد تشغيل الإشعارات دائماً بغض النظر عن وجود طلب نشط
             try {
-                const _notifFocusCh = _supabase.channel('custom-filter-channel');
-                if (!_notifFocusCh || _notifFocusCh.state === 'errored' || _notifFocusCh.state === 'closed') {
-                    try { if (_notifFocusCh) _supabase.removeChannel(_notifFocusCh); } catch(_e2) {}
+                if (!_isNamedChannelHealthy('custom-filter-channel')) {
                     initRealtimeNotifications();
                 }
             } catch(_fe2) { try { initRealtimeNotifications(); } catch(_e3) {} }
@@ -8612,9 +8628,7 @@
         }
         // فحص قناة الإشعارات
         try {
-            const _hbNotifCh = _supabase.channel('custom-filter-channel');
-            if (!_hbNotifCh || _hbNotifCh.state === 'errored' || _hbNotifCh.state === 'closed') {
-                try { if (_hbNotifCh) _supabase.removeChannel(_hbNotifCh); } catch(_e2) {}
+            if (!_isNamedChannelHealthy('custom-filter-channel')) {
                 try { initRealtimeNotifications(); } catch(_e3) {}
             }
         } catch(_hbNe) {}
@@ -8643,9 +8657,7 @@
             setTimeout(function() {
                 if (!currentUser) return;
                 try {
-                    const _visNotifCh = _supabase.channel('custom-filter-channel');
-                    if (!_visNotifCh || _visNotifCh.state === 'errored' || _visNotifCh.state === 'closed' || _visNotifCh.state === 'leaving') {
-                        try { if (_visNotifCh) _supabase.removeChannel(_visNotifCh); } catch(_e2) {}
+                    if (!_isNamedChannelHealthy('custom-filter-channel')) {
                         initRealtimeNotifications();
                     }
                 } catch(_vne) { try { initRealtimeNotifications(); } catch(_e2) {} }
